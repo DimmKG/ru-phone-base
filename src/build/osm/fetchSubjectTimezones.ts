@@ -69,9 +69,7 @@ const FALLBACK_TIMEZONES: Record<string, string> = {
  * distinct Russian-administration admin_level=4 boundary in OSM), or where
  * the number belongs to a special-status resource rather than a normal
  * federal subject (Baikonur, leased to Kazakhstan but run on Moscow time by
- * Russian-Kazakh treaty; see ni-00 "international network" notes). Handled
- * last/lowest-priority per explicit product decision - these are rare edge
- * cases, not the common path.
+ * Russian-Kazakh treaty.
  */
 const SPECIAL_CASE_TIMEZONES: Record<string, string> = {
   baikonur: 'Europe/Moscow',

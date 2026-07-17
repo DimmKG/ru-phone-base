@@ -75,10 +75,23 @@ function regionInfo(
   };
 }
 
-/** Returns every federal subject known to the dataset, each with its resolved timezone. */
+/**
+ * Returns every federal subject known to the dataset, each with its resolved timezone.
+ * Regions whose timezone varies by district (only Sakha/Yakutia, currently) have no
+ * single correct answer without a settlement to disambiguate - `timezone` is left
+ * unset there rather than guessing the republic-wide default.
+ */
 export function listRegions(dataset: Dataset): RegionInfo[] {
-  const regions = regionIndex(dataset);
-  return dataset.regions.map((r) => regionInfo(dataset, regions, r.slug));
+  return dataset.regions.map((r) => {
+    const entry = dataset.timezones[r.slug];
+    const timezone = typeof entry === 'string' ? entry : undefined;
+    return {
+      slug: r.slug,
+      name: r.name,
+      nameLatin: r.nameLatin,
+      ...(timezone !== undefined ? { timezone } : {}),
+    };
+  });
 }
 
 function resolveAllocation(

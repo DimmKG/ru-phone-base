@@ -28,7 +28,7 @@ export const FEDERAL_SUBJECTS: FederalSubject[] = [
   { slug: 'zabaykalsky-krai', name: 'Забайкальский край', nameLatin: 'Zabaykalsky Krai' },
   { slug: 'kamchatka-krai', name: 'Камчатский край', nameLatin: 'Kamchatka Krai' },
   { slug: 'krasnodar-krai', name: 'Краснодарский край', nameLatin: 'Krasnodar Krai' },
-  { slug: 'krasnoyarsk-krai', name: 'Красноярский край', nameLatin: 'Krasnoyarsk Krai', multiTzCandidate: true },
+  { slug: 'krasnoyarsk-krai', name: 'Красноярский край', nameLatin: 'Krasnoyarsk Krai' },
   { slug: 'perm-krai', name: 'Пермский край', nameLatin: 'Perm Krai' },
   { slug: 'primorsky-krai', name: 'Приморский край', nameLatin: 'Primorsky Krai' },
   { slug: 'stavropol-krai', name: 'Ставропольский край', nameLatin: 'Stavropol Krai' },

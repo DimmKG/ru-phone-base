@@ -259,7 +259,12 @@ describe('getRegions', () => {
 
     const sakha = regions.find((r) => r.slug === 'sakha');
     expect(sakha?.nameLatin).toBe('Republic of Sakha (Yakutia)');
-    expect(sakha?.timezone).toBe('Asia/Yakutsk');
+    // Sakha genuinely spans several timezones by district - getRegions() has no
+    // settlement to disambiguate, so it leaves timezone unset rather than guessing.
+    expect(sakha?.timezone).toBeUndefined();
+
+    const krasnoyarsk = regions.find((r) => r.slug === 'krasnoyarsk-krai');
+    expect(krasnoyarsk?.timezone).toBe('Asia/Krasnoyarsk');
   });
 
   it('does not list the internal non-geographic "all-russia" marker - it is not a real region', () => {
