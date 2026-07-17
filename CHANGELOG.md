@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/DimmKG/ru-phone-base/compare/v1.0.0...v1.0.1) (2026-07-17)
+
+
+### Bug Fixes
+
+* trigger release with binary fix ([5f36320](https://github.com/DimmKG/ru-phone-base/commit/5f363208e544da02a361dd3dd732c44cb5fb59d5))
+
 # 1.0.0 (2026-07-17)
 
 
