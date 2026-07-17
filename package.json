@@ -41,7 +41,7 @@
     "./package.json": "./package.json"
   },
   "bin": {
-    "ru-phone-base-build": "./dist/bin/build-data.js"
+    "ru-phone-base-build": "dist/bin/build-data.js"
   },
   "files": [
     "dist"
