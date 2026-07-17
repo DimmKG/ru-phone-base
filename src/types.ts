@@ -1,6 +1,7 @@
 /** `[start, end, operatorIdx, regionSetIdx]` or `[start, end, operatorIdx, regionSetIdx, settlementIdx]`. */
 export type Block =
-  [s: number, e: number, o: number, r: number] | [s: number, e: number, o: number, r: number, p: number];
+  | [s: number, e: number, o: number, r: number]
+  | [s: number, e: number, o: number, r: number, p: number];
 
 /** On-disk/compiled table shape - single-letter keys, array-of-tuples throughout, to minimize the published JSON size. */
 export interface CompiledCodeTable {
