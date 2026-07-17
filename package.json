@@ -1,9 +1,28 @@
 {
   "name": "ru-phone-base",
-  "version": "0.1.0",
+  "version": "0.99.0",
   "description": "Machine-readable Russian phone numbering plan (region, operator, timezone lookup) built from the official numbering registry - Russia's Ministry of Digital Development",
+  "keywords": [
+    "phone",
+    "number",
+    "telephone",
+    "rus",
+    "ru"
+  ],
   "type": "module",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DimmKG/ru-phone-base.git"
+  },
+  "bugs": {
+    "url": "https://github.com/DimmKG/ru-phone-base/issues"
+  },
+  "homepage": "https://github.com/DimmKG/ru-phone-base#readme",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -28,6 +47,7 @@
     "dist"
   ],
   "scripts": {
+    "prepare": "husky",
     "build": "tsup",
     "build:data": "tsx src/bin/build-data.ts --input raw-data --output src/data",
     "dev": "tsup --watch",
@@ -37,20 +57,41 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "semantic-release": "semantic-release"
+  },
+  "lint-staged": {
+    "*.{ts,js,mjs,cjs}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
   },
   "dependencies": {
     "csv-parse": "^5.6.0"
   },
   "devDependencies": {
+    "@commitlint/cli": "19.8.1",
+    "@commitlint/config-conventional": "19.8.1",
     "@eslint/js": "9.39.2",
+    "@semantic-release/changelog": "6.0.3",
+    "@semantic-release/commit-analyzer": "13.0.1",
+    "@semantic-release/git": "10.0.1",
+    "@semantic-release/github": "11.0.3",
+    "@semantic-release/npm": "12.0.2",
+    "@semantic-release/release-notes-generator": "14.1.0",
     "@types/node": "22.10.2",
     "@vitest/eslint-plugin": "1.5.2",
     "eslint": "9.39.2",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-prettier": "5.5.4",
     "globals": "16.5.0",
+    "husky": "9.1.7",
+    "lint-staged": "15.5.2",
     "prettier": "3.6.2",
+    "semantic-release": "24.2.7",
     "tsup": "8.3.5",
     "tsx": "4.19.2",
     "typescript": "5.7.2",
