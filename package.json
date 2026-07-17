@@ -1,6 +1,6 @@
 {
   "name": "ru-phone-base",
-  "version": "0.99.0",
+  "version": "1.0.0",
   "description": "Machine-readable Russian phone numbering plan (region, operator, timezone lookup) built from the official numbering registry - Russia's Ministry of Digital Development",
   "keywords": [
     "phone",
@@ -79,8 +79,8 @@
     "@semantic-release/changelog": "6.0.3",
     "@semantic-release/commit-analyzer": "13.0.1",
     "@semantic-release/git": "10.0.1",
-    "@semantic-release/github": "11.0.3",
-    "@semantic-release/npm": "12.0.2",
+    "@semantic-release/github": "12.0.9",
+    "@semantic-release/npm": "13.1.5",
     "@semantic-release/release-notes-generator": "14.1.0",
     "@types/node": "22.10.2",
     "@vitest/eslint-plugin": "1.5.2",
@@ -91,7 +91,7 @@
     "husky": "9.1.7",
     "lint-staged": "15.5.2",
     "prettier": "3.6.2",
-    "semantic-release": "24.2.7",
+    "semantic-release": "25.0.7",
     "tsup": "8.3.5",
     "tsx": "4.19.2",
     "typescript": "5.7.2",
