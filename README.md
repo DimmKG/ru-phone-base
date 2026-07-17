@@ -210,12 +210,12 @@ npm run format:check  # Prettier only
 
 ## License
 
+See [LICENSE](./LICENSE) for the full text.
+
 ### Code
 
-The dataset build tooling and library are distributed under the MIT license.
+The dataset build tooling and library are distributed under the MIT license (Part 1 of LICENSE).
 
 ### Data
 
-The compiled dataset is derived from the [open data registry «Российская система и план нумерации»](https://opendata.digital.gov.ru/registry/numeric/downloads) published by Russia's Ministry of Digital Development and is subject to the [terms of use for open data published on opendata.digital.gov.ru](https://opendata.digital.gov.ru/terms/).
-
-Without entering into an agreement with Russia's Ministry of Digital Development, you may use (including reuse) the open data freely, at no charge, indefinitely, and without territorial restrictions — including the right to copy, publish, and distribute the open data; modify the open data and combine it with other information; use the open data for non-commercial and commercial purposes; and use it to create computer programs and applications.
+The compiled dataset is derived from the [open data registry «Российская система и план нумерации»](https://opendata.digital.gov.ru/registry/numeric/downloads) published by Russia's Ministry of Digital Development and is subject to the [terms of use for open data published on opendata.digital.gov.ru](https://opendata.digital.gov.ru/terms/) (Part 2 of LICENSE; authoritative copy at the link).
