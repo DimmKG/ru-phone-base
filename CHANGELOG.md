@@ -1,3 +1,10 @@
+## [1.0.2](https://github.com/DimmKG/ru-phone-base/compare/v1.0.1...v1.0.2) (2026-07-17)
+
+
+### Bug Fixes
+
+* remove yakutk timezone from getRegions ([40ceba1](https://github.com/DimmKG/ru-phone-base/commit/40ceba1175224c6f7e0a80682c601b35cd407c9f))
+
 ## [1.0.1](https://github.com/DimmKG/ru-phone-base/compare/v1.0.0...v1.0.1) (2026-07-17)
 
 
