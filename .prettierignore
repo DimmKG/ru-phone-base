@@ -1,0 +1,7 @@
+dist/
+node_modules/
+src/data/
+src/reports/
+raw-data/
+my-dataset/
+package-lock.json

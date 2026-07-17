@@ -1,0 +1,63 @@
+{
+  "name": "ru-phone-base",
+  "version": "0.1.0",
+  "description": "Machine-readable Russian phone numbering plan (region, operator, timezone lookup) built from the official numbering registry - Russia's Ministry of Digital Development",
+  "type": "module",
+  "license": "MIT",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./data/*.json": "./dist/data/*.json",
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "ru-phone-base-build": "./dist/bin/build-data.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "build:data": "tsx src/bin/build-data.ts --input raw-data --output src/data",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "dependencies": {
+    "csv-parse": "^5.6.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.2",
+    "@types/node": "22.10.2",
+    "@vitest/eslint-plugin": "1.5.2",
+    "eslint": "9.39.2",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-prettier": "5.5.4",
+    "globals": "16.5.0",
+    "prettier": "3.6.2",
+    "tsup": "8.3.5",
+    "tsx": "4.19.2",
+    "typescript": "5.7.2",
+    "typescript-eslint": "8.46.2",
+    "vitest": "2.1.8"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
