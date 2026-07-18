@@ -31,13 +31,16 @@ console.log(result);
 //   input: '+7 495 123-45-67',
 //   normalized: '74951234567',
 //   valid: true,
-//   type: 'fixed',
-//   code: '495',
-//   operator: 'ПАО МГТС',
-//   inn: '7710016640',
-//   region: [{ slug: 'moscow', name: 'город Москва', nameLatin: 'Moscow', timezone: 'Europe/Moscow' }],
-//   settlement: 'Город Москва',
-//   timezone: 'Europe/Moscow',
+//   data: {
+//     type: 'fixed',
+//     code: '495',
+//     operator: 'ПАО МГТС',
+//     inn: '7710016640',
+//     region: [{ slug: 'moscow', name: 'город Москва', nameLatin: 'Moscow', timezone: 'Europe/Moscow' }],
+//     settlement: 'Город Москва',
+//     nationwide: false,
+//     timezone: 'Europe/Moscow',
+//   },
 // }
 ```
 
@@ -50,19 +53,33 @@ Accepted input formats: `+7XXXXXXXXXX`, `8XXXXXXXXXX`, `7XXXXXXXXXX`, or a bare 
 Looks up a phone number using the dataset bundled with the package.
 
 ```ts
-interface LookupResult {
+// Discriminated union on `valid` - narrow with an `if (result.valid)` check
+// and TypeScript guarantees `data` is there (and `reason` isn't), or vice versa.
+type LookupResult = LookupSuccess | LookupFailure;
+
+interface LookupSuccess {
   input: string;
-  normalized: string | null; // e.g. "74951234567", or null if unparseable
-  valid: boolean;
-  type?: 'fixed' | 'mobile';
-  code?: string; // 3-digit ABC/DEF code
-  operator?: string;
-  inn?: string;
-  region?: RegionInfo[];
+  normalized: string; // e.g. "74951234567"
+  valid: true;
+  data: PhoneNumberInfo;
+}
+
+interface LookupFailure {
+  input: string;
+  normalized: string | null; // null only for invalid-format (unparseable input)
+  valid: false;
+  reason: 'invalid-format' | 'unassigned';
+}
+
+interface PhoneNumberInfo {
+  type: 'fixed' | 'mobile';
+  code: string; // 3-digit ABC/DEF code
+  operator: string;
+  inn: string;
+  region: RegionInfo[];
   settlement?: string; // city/town/village, when the registry names one specific location
-  nationwide?: boolean; // true for federal/non-geographic numbers (codes 800-809: 8-800 hotlines, televoting, etc.) with no single home region
+  nationwide: boolean; // true for federal/non-geographic numbers (codes 800-809: 8-800 hotlines, televoting, etc.) with no single home region
   timezone?: string; // every real allocation falls within one timezone; unset for nationwide numbers
-  reason?: 'invalid-format' | 'unassigned';
 }
 
 interface RegionInfo {

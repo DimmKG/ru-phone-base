@@ -51,16 +51,12 @@ export interface RegionInfo {
   timezone?: string;
 }
 
-export interface LookupResult {
-  input: string;
-  /** 11-digit normalized number (e.g. "74951234567"), or null if the input couldn't be parsed. */
-  normalized: string | null;
-  valid: boolean;
-  type?: NumberType;
+export interface PhoneNumberInfo {
+  type: NumberType;
   /** 3-digit ABC/DEF code. */
-  code?: string;
-  operator?: string;
-  inn?: string;
+  code: string;
+  operator: string;
+  inn: string;
   /**
    * Federal subject(s) this allocation applies to. Empty when `nationwide` is
    * true and the registry names no specific subject at all; otherwise, for
@@ -69,12 +65,31 @@ export interface LookupResult {
    * is not a reliable "home region" for the number and should be treated as
    * informational only.
    */
-  region?: RegionInfo[];
+  region: RegionInfo[];
   /** Settlement/locality name (city, town, village...), when the source row named one specific installation location. Never set when `nationwide` is true. */
   settlement?: string;
   /** True for federal/non-geographic numbers under codes 800-809 (8-800 toll-free, televoting, etc.) - these have no single home region, so `region`/`settlement` are not meaningful and `timezone` is never set. */
-  nationwide?: boolean;
+  nationwide: boolean;
   /** Resolved timezone for this allocation - every real allocation observed in the registry falls within a single timezone (see resolveTimezone in lookup.ts). Unset for nationwide numbers or when no region resolves to a known timezone. */
   timezone?: string;
-  reason?: 'invalid-format' | 'unassigned';
 }
+
+export interface LookupSuccess {
+  input: string;
+  /** 11-digit normalized number (e.g. "74951234567"). */
+  normalized: string;
+  valid: true;
+  /** The resolved region/operator/timezone info for the number. */
+  data: PhoneNumberInfo;
+}
+
+export interface LookupFailure {
+  input: string;
+  /** 11-digit normalized number, or null if the input couldn't even be parsed into one. */
+  normalized: string | null;
+  valid: false;
+  reason: 'invalid-format' | 'unassigned';
+}
+
+/** Discriminate on `valid`: when true, `data` is guaranteed present; when false, `data` doesn't exist on the type at all. */
+export type LookupResult = LookupSuccess | LookupFailure;

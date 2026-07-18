@@ -5,6 +5,7 @@ import type {
   FederalSubject,
   LookupResult,
   NumberType,
+  PhoneNumberInfo,
   RegionInfo,
 } from './types.js';
 import { normalizePhoneNumber } from './phone.js';
@@ -100,7 +101,7 @@ function resolveAllocation(
   block: Block,
   code: string,
   regions: Map<string, FederalSubject>,
-): Pick<LookupResult, 'operator' | 'inn' | 'region' | 'settlement' | 'nationwide'> {
+): Pick<PhoneNumberInfo, 'operator' | 'inn' | 'region' | 'settlement' | 'nationwide'> {
   const o = block[2];
   const r = block[3];
   const p = block.length === 5 ? block[4] : undefined;
@@ -115,14 +116,14 @@ function resolveAllocation(
     operator,
     inn,
     region,
+    nationwide,
     ...(settlement !== undefined ? { settlement } : {}),
-    ...(nationwide ? { nationwide: true } : {}),
   };
 }
 
-function resolveTimezone(allocation: Pick<LookupResult, 'region' | 'nationwide'>): { timezone?: string } {
+function resolveTimezone(allocation: Pick<PhoneNumberInfo, 'region' | 'nationwide'>): { timezone?: string } {
   if (allocation.nationwide) return {};
-  for (const region of allocation.region ?? []) {
+  for (const region of allocation.region) {
     if (region.timezone) return { timezone: region.timezone };
   }
   return {};
@@ -135,7 +136,7 @@ function tryTable(
   subscriberNumber: number,
   type: NumberType,
   regions: Map<string, FederalSubject>,
-): LookupResult | undefined {
+): PhoneNumberInfo | undefined {
   if (!table) return undefined; // this table was excluded from the dataset (see LoadDatasetOptions.include)
   const blocks = table.c[code];
   if (!blocks) return undefined;
@@ -144,7 +145,7 @@ function tryTable(
 
   const allocation = resolveAllocation(dataset, table, block, code, regions);
   const tz = resolveTimezone(allocation);
-  return { input: '', normalized: null, valid: true, type, code, ...allocation, ...tz };
+  return { type, code, ...allocation, ...tz };
 }
 
 /**
@@ -162,12 +163,12 @@ export function lookupPhoneNumber(dataset: Dataset, input: string): LookupResult
 
   const regions = regionIndex(dataset);
 
-  const result =
+  const data =
     tryTable(dataset, dataset.fixed, code, subscriberNumber, 'fixed', regions) ??
     tryTable(dataset, dataset.mobile, code, subscriberNumber, 'mobile', regions);
 
-  if (!result) {
-    return { input, normalized, valid: false, code, reason: 'unassigned' };
+  if (!data) {
+    return { input, normalized, valid: false, reason: 'unassigned' };
   }
-  return { ...result, input, normalized };
+  return { input, normalized, valid: true, data };
 }

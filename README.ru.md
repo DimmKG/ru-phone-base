@@ -31,13 +31,16 @@ console.log(result);
 //   input: '+7 495 123-45-67',
 //   normalized: '74951234567',
 //   valid: true,
-//   type: 'fixed',
-//   code: '495',
-//   operator: 'ПАО МГТС',
-//   inn: '7710016640',
-//   region: [{ slug: 'moscow', name: 'город Москва', nameLatin: 'Moscow', timezone: 'Europe/Moscow' }],
-//   settlement: 'Город Москва',
-//   timezone: 'Europe/Moscow',
+//   data: {
+//     type: 'fixed',
+//     code: '495',
+//     operator: 'ПАО МГТС',
+//     inn: '7710016640',
+//     region: [{ slug: 'moscow', name: 'город Москва', nameLatin: 'Moscow', timezone: 'Europe/Moscow' }],
+//     settlement: 'Город Москва',
+//     nationwide: false,
+//     timezone: 'Europe/Moscow',
+//   },
 // }
 ```
 
@@ -50,19 +53,33 @@ console.log(result);
 Ищет номер телефона по базе данных, поставляемой вместе с пакетом.
 
 ```ts
-interface LookupResult {
+// Дискриминированное объединение по `valid` - после проверки `if (result.valid)`
+// TypeScript гарантирует наличие `data` (и отсутствие `reason`), и наоборот.
+type LookupResult = LookupSuccess | LookupFailure;
+
+interface LookupSuccess {
   input: string;
-  normalized: string | null; // например "74951234567", или null, если номер не распознан
-  valid: boolean;
-  type?: 'fixed' | 'mobile';
-  code?: string; // 3-значный код АВС/DEF
-  operator?: string;
-  inn?: string;
-  region?: RegionInfo[];
+  normalized: string; // например "74951234567"
+  valid: true;
+  data: PhoneNumberInfo;
+}
+
+interface LookupFailure {
+  input: string;
+  normalized: string | null; // null только при invalid-format (нераспознанный ввод)
+  valid: false;
+  reason: 'invalid-format' | 'unassigned';
+}
+
+interface PhoneNumberInfo {
+  type: 'fixed' | 'mobile';
+  code: string; // 3-значный код АВС/DEF
+  operator: string;
+  inn: string;
+  region: RegionInfo[];
   settlement?: string; // город/посёлок/село, если в реестре указано конкретное место
-  nationwide?: boolean; // true для федеральных/негеографических номеров (коды 800-809: горячие линии 8-800, телеголосование и т.п.), не привязанных к одному региону
+  nationwide: boolean; // true для федеральных/негеографических номеров (коды 800-809: горячие линии 8-800, телеголосование и т.п.), не привязанных к одному региону
   timezone?: string; // любая реальная аллокация лежит в одном часовом поясе; отсутствует для федеральных номеров
-  reason?: 'invalid-format' | 'unassigned';
 }
 
 interface RegionInfo {

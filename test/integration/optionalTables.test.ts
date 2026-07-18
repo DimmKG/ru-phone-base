@@ -13,19 +13,22 @@ describe('optional lookup tables', () => {
     const expected = full.lookupPhoneNumber(number);
 
     expect(result.valid).toBe(true);
-    expect(result.type).toBe('mobile');
-    expect(result.operator).toBe(expected.operator);
+    if (!result.valid || !expected.valid) throw new Error('unreachable');
+    expect(result.data.type).toBe('mobile');
+    expect(result.data.operator).toBe(expected.data.operator);
   });
 
   it('mobile-only instance rejects fixed numbers as unassigned', () => {
     const result = mobileOnly.lookupPhoneNumber('+74951234567');
     expect(result.valid).toBe(false);
+    if (result.valid) throw new Error('unreachable');
     expect(result.reason).toBe('unassigned');
   });
 
   it('fixed-only instance rejects mobile numbers as unassigned', () => {
     const result = fixedOnly.lookupPhoneNumber('+79161234567');
     expect(result.valid).toBe(false);
+    if (result.valid) throw new Error('unreachable');
     expect(result.reason).toBe('unassigned');
   });
 

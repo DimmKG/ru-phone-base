@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { createRuPhoneBase } from '../../src/index.js';
 import { loadDataset } from '../../src/dataLoader.js';
-import type { CompiledCodeTable } from '../../src/types.js';
+import type { CompiledCodeTable, LookupResult, PhoneNumberInfo } from '../../src/types.js';
 
 const { lookupPhoneNumber, getRegions } = createRuPhoneBase();
 const dataset = loadDataset();
@@ -17,42 +17,44 @@ function numberForFirstBlock(table: CompiledCodeTable, code: string): string {
   return `7${code}${subscriber}`;
 }
 
+/** Asserts a lookup succeeded and narrows it to the `data`-bearing branch of the `LookupResult` union. */
+function expectData(result: LookupResult): PhoneNumberInfo {
+  expect(result.valid).toBe(true);
+  if (!result.valid) throw new Error('unreachable');
+  return result.data;
+}
+
 describe('known real ABC/DEF codes resolve via the bundled dataset', () => {
   it('495 (Moscow, fixed)', () => {
-    const result = lookupPhoneNumber(numberForFirstBlock(fixedTable, '495'));
-    expect(result.valid).toBe(true);
-    expect(result.type).toBe('fixed');
-    expect(result.region?.map((r) => r.name)).toContain('город Москва');
-    expect(result.timezone).toBe('Europe/Moscow');
+    const data = expectData(lookupPhoneNumber(numberForFirstBlock(fixedTable, '495')));
+    expect(data.type).toBe('fixed');
+    expect(data.region.map((r) => r.name)).toContain('город Москва');
+    expect(data.timezone).toBe('Europe/Moscow');
   });
 
   it('812 (Saint Petersburg, fixed)', () => {
-    const result = lookupPhoneNumber(numberForFirstBlock(fixedTable, '812'));
-    expect(result.valid).toBe(true);
-    expect(result.region?.map((r) => r.name)).toContain('город Санкт-Петербург');
-    expect(result.timezone).toBe('Europe/Moscow');
+    const data = expectData(lookupPhoneNumber(numberForFirstBlock(fixedTable, '812')));
+    expect(data.region.map((r) => r.name)).toContain('город Санкт-Петербург');
+    expect(data.timezone).toBe('Europe/Moscow');
   });
 
   it('343 (Yekaterinburg, fixed)', () => {
-    const result = lookupPhoneNumber(numberForFirstBlock(fixedTable, '343'));
-    expect(result.valid).toBe(true);
-    expect(result.region?.map((r) => r.name)).toContain('Свердловская область');
-    expect(result.timezone).toBe('Asia/Yekaterinburg');
+    const data = expectData(lookupPhoneNumber(numberForFirstBlock(fixedTable, '343')));
+    expect(data.region.map((r) => r.name)).toContain('Свердловская область');
+    expect(data.timezone).toBe('Asia/Yekaterinburg');
   });
 
   it('383 (Novosibirsk, fixed)', () => {
-    const result = lookupPhoneNumber(numberForFirstBlock(fixedTable, '383'));
-    expect(result.valid).toBe(true);
-    expect(result.region?.map((r) => r.name)).toContain('Новосибирская область');
-    expect(result.timezone).toBe('Asia/Novosibirsk');
+    const data = expectData(lookupPhoneNumber(numberForFirstBlock(fixedTable, '383')));
+    expect(data.region.map((r) => r.name)).toContain('Новосибирская область');
+    expect(data.timezone).toBe('Asia/Novosibirsk');
   });
 
   it('a mobile DEF code resolves with type "mobile"', () => {
     const mobileCode = Object.keys(mobileTable.c)[0];
-    const result = lookupPhoneNumber(numberForFirstBlock(mobileTable, mobileCode));
-    expect(result.valid).toBe(true);
-    expect(result.type).toBe('mobile');
-    expect(result.operator).toBeDefined();
+    const data = expectData(lookupPhoneNumber(numberForFirstBlock(mobileTable, mobileCode)));
+    expect(data.type).toBe('mobile');
+    expect(data.operator).toBeDefined();
   });
 
   it('a pure 8-800 toll-free number resolves with nationwide:true, an empty region array, no settlement, and no timezone', () => {
@@ -63,12 +65,11 @@ describe('known real ABC/DEF codes resolve via the bundled dataset', () => {
     const block = fixedTable.c['800']?.[0];
     expect(block).toBeDefined();
     const subscriber = String(block![0]).padStart(7, '0');
-    const result = lookupPhoneNumber(`7800${subscriber}`);
-    expect(result.valid).toBe(true);
-    expect(result.nationwide).toBe(true);
-    expect(result.region).toEqual([]);
-    expect(result.settlement).toBeUndefined();
-    expect(result.timezone).toBeUndefined();
+    const data = expectData(lookupPhoneNumber(`7800${subscriber}`));
+    expect(data.nationwide).toBe(true);
+    expect(data.region).toEqual([]);
+    expect(data.settlement).toBeUndefined();
+    expect(data.timezone).toBeUndefined();
   });
 
   it('803 (televoting - federal by code prefix even though the row lists specific regions)', () => {
@@ -76,44 +77,39 @@ describe('known real ABC/DEF codes resolve via the bundled dataset', () => {
     // non-authoritative) set of subjects - isFederalCode('803') still forces
     // nationwide:true and suppresses timezone, since the code prefix (80*) is
     // the reliable signal, not whatever regions happen to be listed.
-    const result = lookupPhoneNumber('78033510000');
-    expect(result.valid).toBe(true);
-    expect(result.nationwide).toBe(true);
-    expect(result.region!.length).toBeGreaterThan(1);
-    expect(result.timezone).toBeUndefined();
+    const data = expectData(lookupPhoneNumber('78033510000'));
+    expect(data.nationwide).toBe(true);
+    expect(data.region.length).toBeGreaterThan(1);
+    expect(data.timezone).toBeUndefined();
   });
 
   it('an allocation can legitimately span multiple regions (not a "nationwide" case)', () => {
     // Ordinary (non-80*) blocks can still list more than one federal subject
     // under one operator - e.g. a mobile block serving both Moscow and
     // Moscow Oblast.
-    const result = lookupPhoneNumber('79001400000');
-    expect(result.valid).toBe(true);
-    expect(result.nationwide).toBeUndefined();
-    expect(result.region?.map((r) => r.slug).sort()).toEqual(['moscow', 'moscow-oblast']);
-    expect(result.timezone).toBe('Europe/Moscow');
+    const data = expectData(lookupPhoneNumber('79001400000'));
+    expect(data.nationwide).toBe(false);
+    expect(data.region.map((r) => r.slug).sort()).toEqual(['moscow', 'moscow-oblast']);
+    expect(data.timezone).toBe('Europe/Moscow');
   });
 
   it('365 (Crimea, fixed)', () => {
-    const result = lookupPhoneNumber(numberForFirstBlock(fixedTable, '365'));
-    expect(result.valid).toBe(true);
-    expect(result.type).toBe('fixed');
-    expect(result.region?.map((r) => r.slug)).toContain('crimea');
-    expect(result.timezone).toBe('Europe/Simferopol');
+    const data = expectData(lookupPhoneNumber(numberForFirstBlock(fixedTable, '365')));
+    expect(data.type).toBe('fixed');
+    expect(data.region.map((r) => r.slug)).toContain('crimea');
+    expect(data.timezone).toBe('Europe/Simferopol');
   });
 
   it('810 (Zaporizhzhia, fixed)', () => {
-    const result = lookupPhoneNumber(numberForFirstBlock(fixedTable, '810'));
-    expect(result.valid).toBe(true);
-    expect(result.region?.map((r) => r.slug)).toContain('zaporizhzhia-oblast');
-    expect(result.timezone).toBe('Europe/Moscow');
+    const data = expectData(lookupPhoneNumber(numberForFirstBlock(fixedTable, '810')));
+    expect(data.region.map((r) => r.slug)).toContain('zaporizhzhia-oblast');
+    expect(data.timezone).toBe('Europe/Moscow');
   });
 
   it('856 (Donetsk PR, fixed)', () => {
-    const result = lookupPhoneNumber(numberForFirstBlock(fixedTable, '856'));
-    expect(result.valid).toBe(true);
-    expect(result.region?.map((r) => r.slug)).toContain('donetsk-pr');
-    expect(result.timezone).toBe('Europe/Moscow');
+    const data = expectData(lookupPhoneNumber(numberForFirstBlock(fixedTable, '856')));
+    expect(data.region.map((r) => r.slug)).toContain('donetsk-pr');
+    expect(data.timezone).toBe('Europe/Moscow');
   });
 
   it('856 625-30-00 (disputed range: raw "Регион" column says Krasnodar Krai, "Территория ГАР" says Donetsk PR - GAR wins)', () => {
@@ -123,53 +119,50 @@ describe('known real ABC/DEF codes resolve via the bundled dataset', () => {
     // own state telecom enterprise - confirms Территория ГАР (Donetsk PR) is
     // correct and Регион (Krasnodar Krai) is the data-entry error
     // vs. Donetsk's Slavyansk/Sloviansk.
-    const result = lookupPhoneNumber('78566253000');
-    expect(result.valid).toBe(true);
-    expect(result.operator).toBe('ГУП ДНР "РОС"');
-    expect(result.region?.map((r) => r.slug)).toEqual(['donetsk-pr']);
-    expect(result.timezone).toBe('Europe/Moscow');
+    const data = expectData(lookupPhoneNumber('78566253000'));
+    expect(data.operator).toBe('ГУП ДНР "РОС"');
+    expect(data.region.map((r) => r.slug)).toEqual(['donetsk-pr']);
+    expect(data.timezone).toBe('Europe/Moscow');
   });
 
   it('857 (Luhansk PR, fixed)', () => {
-    const result = lookupPhoneNumber(numberForFirstBlock(fixedTable, '857'));
-    expect(result.valid).toBe(true);
-    expect(result.region?.map((r) => r.slug)).toContain('luhansk-pr');
-    expect(result.timezone).toBe('Europe/Moscow');
+    const data = expectData(lookupPhoneNumber(numberForFirstBlock(fixedTable, '857')));
+    expect(data.region.map((r) => r.slug)).toContain('luhansk-pr');
+    expect(data.timezone).toBe('Europe/Moscow');
   });
 
   it('860 (Kherson, fixed)', () => {
-    const result = lookupPhoneNumber(numberForFirstBlock(fixedTable, '860'));
-    expect(result.valid).toBe(true);
-    expect(result.region?.map((r) => r.slug)).toContain('kherson-oblast');
-    expect(result.timezone).toBe('Europe/Moscow');
+    const data = expectData(lookupPhoneNumber(numberForFirstBlock(fixedTable, '860')));
+    expect(data.region.map((r) => r.slug)).toContain('kherson-oblast');
+    expect(data.timezone).toBe('Europe/Moscow');
   });
 
   it('949 (Donetsk PR, mobile)', () => {
-    const result = lookupPhoneNumber(numberForFirstBlock(mobileTable, '949'));
-    expect(result.valid).toBe(true);
-    expect(result.type).toBe('mobile');
-    expect(result.region?.map((r) => r.slug)).toContain('donetsk-pr');
-    expect(result.timezone).toBe('Europe/Moscow');
+    const data = expectData(lookupPhoneNumber(numberForFirstBlock(mobileTable, '949')));
+    expect(data.type).toBe('mobile');
+    expect(data.region.map((r) => r.slug)).toContain('donetsk-pr');
+    expect(data.timezone).toBe('Europe/Moscow');
   });
 
   it('959 (Luhansk PR, mobile)', () => {
-    const result = lookupPhoneNumber(numberForFirstBlock(mobileTable, '959'));
-    expect(result.valid).toBe(true);
-    expect(result.type).toBe('mobile');
-    expect(result.region?.map((r) => r.slug)).toContain('luhansk-pr');
-    expect(result.timezone).toBe('Europe/Moscow');
+    const data = expectData(lookupPhoneNumber(numberForFirstBlock(mobileTable, '959')));
+    expect(data.type).toBe('mobile');
+    expect(data.region.map((r) => r.slug)).toContain('luhansk-pr');
+    expect(data.timezone).toBe('Europe/Moscow');
   });
 
   it('reports unassigned for a code that is not covered anywhere', () => {
     // 000 is never a real ABC/DEF code
     const result = lookupPhoneNumber('70009999999');
     expect(result.valid).toBe(false);
+    if (result.valid) throw new Error('unreachable');
     expect(result.reason).toBe('unassigned');
   });
 
   it('reports invalid-format for unparseable input', () => {
     const result = lookupPhoneNumber('not a phone number');
     expect(result.valid).toBe(false);
+    if (result.valid) throw new Error('unreachable');
     expect(result.reason).toBe('invalid-format');
     expect(result.normalized).toBeNull();
   });
@@ -183,64 +176,63 @@ describe('Sakha/Yakutia district-level timezones (code 411)', () => {
   // byDistrict keys - these numbers, one per district, prove that mapping
   // actually gets used end-to-end, not just present in timezones.json.
   it('г.о. город Якутск - the republic default timezone', () => {
-    const result = lookupPhoneNumber('74112200000');
-    expect(result.valid).toBe(true);
-    expect(result.settlement).toBe('г.о. город Якутск');
-    expect(result.timezone).toBe('Asia/Yakutsk');
+    const data = expectData(lookupPhoneNumber('74112200000'));
+    expect(data.settlement).toBe('г.о. город Якутск');
+    expect(data.timezone).toBe('Asia/Yakutsk');
   });
 
   it('м.р-н Усть-Майский -> Asia/Khandyga', () => {
-    const result = lookupPhoneNumber('74114021000');
-    expect(result.settlement).toBe('м.р-н Усть-Майский');
-    expect(result.timezone).toBe('Asia/Khandyga');
+    const data = expectData(lookupPhoneNumber('74114021000'));
+    expect(data.settlement).toBe('м.р-н Усть-Майский');
+    expect(data.timezone).toBe('Asia/Khandyga');
   });
 
   it('м.р-н Томпонский -> Asia/Khandyga', () => {
-    const result = lookupPhoneNumber('74115323100');
-    expect(result.settlement).toBe('м.р-н Томпонский');
-    expect(result.timezone).toBe('Asia/Khandyga');
+    const data = expectData(lookupPhoneNumber('74115323100'));
+    expect(data.settlement).toBe('м.р-н Томпонский');
+    expect(data.timezone).toBe('Asia/Khandyga');
   });
 
   it('м.р-н Оймяконский -> Asia/Ust-Nera', () => {
-    const result = lookupPhoneNumber('74115420000');
-    expect(result.settlement).toBe('м.р-н Оймяконский');
-    expect(result.timezone).toBe('Asia/Ust-Nera');
+    const data = expectData(lookupPhoneNumber('74115420000'));
+    expect(data.settlement).toBe('м.р-н Оймяконский');
+    expect(data.timezone).toBe('Asia/Ust-Nera');
   });
 
   it('м.р-н Момский -> Asia/Srednekolymsk', () => {
-    const result = lookupPhoneNumber('74115021000');
-    expect(result.settlement).toBe('м.р-н Момский');
-    expect(result.timezone).toBe('Asia/Srednekolymsk');
+    const data = expectData(lookupPhoneNumber('74115021000'));
+    expect(data.settlement).toBe('м.р-н Момский');
+    expect(data.timezone).toBe('Asia/Srednekolymsk');
   });
 
   it('м.р-н Среднеколымский -> Asia/Srednekolymsk', () => {
-    const result = lookupPhoneNumber('74115623000');
-    expect(result.settlement).toBe('м.р-н Среднеколымский');
-    expect(result.timezone).toBe('Asia/Srednekolymsk');
+    const data = expectData(lookupPhoneNumber('74115623000'));
+    expect(data.settlement).toBe('м.р-н Среднеколымский');
+    expect(data.timezone).toBe('Asia/Srednekolymsk');
   });
 
   it('м.р-н Нижнеколымский -> Asia/Srednekolymsk', () => {
-    const result = lookupPhoneNumber('74115722000');
-    expect(result.settlement).toBe('м.р-н Нижнеколымский');
-    expect(result.timezone).toBe('Asia/Srednekolymsk');
+    const data = expectData(lookupPhoneNumber('74115722000'));
+    expect(data.settlement).toBe('м.р-н Нижнеколымский');
+    expect(data.timezone).toBe('Asia/Srednekolymsk');
   });
 
   it('м.р-н Аллаиховский -> Asia/Srednekolymsk', () => {
-    const result = lookupPhoneNumber('74115820000');
-    expect(result.settlement).toBe('м.р-н Аллаиховский');
-    expect(result.timezone).toBe('Asia/Srednekolymsk');
+    const data = expectData(lookupPhoneNumber('74115820000'));
+    expect(data.settlement).toBe('м.р-н Аллаиховский');
+    expect(data.timezone).toBe('Asia/Srednekolymsk');
   });
 
   it('м.р-н Абыйский -> Asia/Srednekolymsk', () => {
-    const result = lookupPhoneNumber('74115920000');
-    expect(result.settlement).toBe('м.р-н Абыйский');
-    expect(result.timezone).toBe('Asia/Srednekolymsk');
+    const data = expectData(lookupPhoneNumber('74115920000'));
+    expect(data.settlement).toBe('м.р-н Абыйский');
+    expect(data.timezone).toBe('Asia/Srednekolymsk');
   });
 
   it('м.р-н Верхнеколымский -> Asia/Srednekolymsk', () => {
-    const result = lookupPhoneNumber('74115525000');
-    expect(result.settlement).toBe('м.р-н Верхнеколымский');
-    expect(result.timezone).toBe('Asia/Srednekolymsk');
+    const data = expectData(lookupPhoneNumber('74115525000'));
+    expect(data.settlement).toBe('м.р-н Верхнеколымский');
+    expect(data.timezone).toBe('Asia/Srednekolymsk');
   });
 });
 

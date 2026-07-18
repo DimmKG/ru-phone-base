@@ -6,6 +6,9 @@ import type { Dataset, LookupResult, RegionInfo, TableName } from './types.js';
 export type {
   Dataset,
   LookupResult,
+  LookupSuccess,
+  LookupFailure,
+  PhoneNumberInfo,
   NumberType,
   RegionInfo,
   CompiledCodeTable,
