@@ -8,8 +8,8 @@ import { computeStats, type DiffStats } from '../build/diff/computeStats.js';
 function parseArgs(argv: string[]) {
   const args = {
     old: undefined as string | undefined,
-    newData: path.resolve('src/data'),
-    newReports: path.resolve('src/reports'),
+    newData: undefined as string | undefined,
+    newReports: undefined as string | undefined,
     output: undefined as string | undefined,
   };
   for (let i = 0; i < argv.length; i++) {
@@ -44,19 +44,25 @@ function parseArgs(argv: string[]) {
 function printHelp() {
   console.log(`ru-phone-base-diff - diff a previous compiled dataset snapshot against the current one
 
-Usage: tsx src/bin/diff-dataset.ts --old <dir> --output <dir> [options]
+Usage: ru-phone-base-diff --old <dir> --new-data <dir> --output <dir> [options]
 
 Options:
   --old <dir>          (required) Directory containing a previous snapshot,
                         laid out as <dir>/data/*.json + <dir>/reports/*.json
-                        (e.g. a copy of src/data + src/reports taken aside
-                        before a rebuild).
-  --new-data <dir>     Current compiled dataset dir (default: src/data)
-  --new-reports <dir>  Current reports dir (default: src/reports)
+                        (e.g. a copy of a previous ru-phone-base-build --output,
+                        plus its sibling reports/ directory, taken aside before
+                        regenerating). The reports/ subdirectory is optional -
+                        see --new-reports.
+  --new-data <dir>     (required) Current compiled dataset dir (e.g. the
+                        --output of a fresh ru-phone-base-build run)
+  --new-reports <dir>  Current reports dir (the sibling "reports/" directory
+                        next to that --output). Optional - if omitted (or if
+                        <old>/reports is missing), discrepancy/unmapped-region
+                        comparison is skipped and stats.json simply omits
+                        those fields; the allocation diff is unaffected.
   --output <dir>       (required) Where to write stats.json and the detailed
                         diff JSON files (added/removed/changed allocations,
-                        timezone changes). Does not render a PR-ready summary
-                        - see tools/build-pr-summary.ts for that.
+                        timezone changes).
   -h, --help           Show this help
 `);
 }
@@ -75,24 +81,32 @@ function printSummary(stats: DiffStats): void {
   console.log(`  changed (tz):     ${fixed.changedTimezone} / ${mobile.changedTimezone} / ${total.changedTimezone}`);
   console.log(`  unchanged:        ${fixed.unchanged} / ${mobile.unchanged} / ${total.unchanged}`);
 
-  const discrepancyEntries = Object.entries(stats.discrepancies);
-  if (discrepancyEntries.length > 0) {
-    console.log('Discrepancies (before -> after):');
-    for (const [kind, c] of discrepancyEntries) {
-      console.log(`  ${kind}: ${c.before} -> ${c.after} (${c.delta >= 0 ? '+' : ''}${c.delta})`);
+  if (stats.discrepancies) {
+    const discrepancyEntries = Object.entries(stats.discrepancies);
+    if (discrepancyEntries.length > 0) {
+      console.log('Discrepancies (before -> after):');
+      for (const [kind, c] of discrepancyEntries) {
+        console.log(`  ${kind}: ${c.before} -> ${c.after} (${c.delta >= 0 ? '+' : ''}${c.delta})`);
+      }
     }
+  } else {
+    console.log('Discrepancies: not compared (no reports/ available on one or both sides)');
   }
 
-  console.log(
-    `Unmapped region tokens: ${stats.unmappedRegions.before} -> ${stats.unmappedRegions.after} ` +
-      `(+${stats.unmappedRegions.newlyUnmapped.length} / -${stats.unmappedRegions.newlyResolved.length})`,
-  );
+  if (stats.unmappedRegions) {
+    console.log(
+      `Unmapped region tokens: ${stats.unmappedRegions.before} -> ${stats.unmappedRegions.after} ` +
+        `(+${stats.unmappedRegions.newlyUnmapped.length} / -${stats.unmappedRegions.newlyResolved.length})`,
+    );
+  } else {
+    console.log('Unmapped region tokens: not compared (no reports/ available on one or both sides)');
+  }
 }
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
-  if (!args.old || !args.output) {
-    console.error('Error: --old <dir> and --output <dir> are required.');
+  if (!args.old || !args.newData || !args.output) {
+    console.error('Error: --old, --new-data, and --output are all required.');
     printHelp();
     process.exit(1);
   }
@@ -101,8 +115,14 @@ async function main() {
   const newSnapshot = loadSnapshot(args.newData, args.newReports);
 
   const allocDiff = diffAllocations(oldSnapshot.allocations, newSnapshot.allocations);
-  const discrepancyStats = diffDiscrepancyCounts(oldSnapshot.discrepancies, newSnapshot.discrepancies);
-  const unmappedStats = diffUnmappedRegions(oldSnapshot.unmappedRegions, newSnapshot.unmappedRegions);
+  const discrepancyStats =
+    oldSnapshot.discrepancies !== undefined && newSnapshot.discrepancies !== undefined
+      ? diffDiscrepancyCounts(oldSnapshot.discrepancies, newSnapshot.discrepancies)
+      : undefined;
+  const unmappedStats =
+    oldSnapshot.unmappedRegions !== undefined && newSnapshot.unmappedRegions !== undefined
+      ? diffUnmappedRegions(oldSnapshot.unmappedRegions, newSnapshot.unmappedRegions)
+      : undefined;
   const stats = computeStats(oldSnapshot, newSnapshot, allocDiff, discrepancyStats, unmappedStats);
 
   mkdirSync(args.output, { recursive: true });

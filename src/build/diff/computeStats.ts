@@ -12,16 +12,17 @@ export interface DiffStats {
     mobile: AllocationCounts;
     total: AllocationCounts;
   };
-  discrepancies: Record<string, KindCounts>;
-  unmappedRegions: UnmappedRegionsDiff;
+  /** Undefined when reports weren't available for both snapshots being compared - see loadSnapshot's `reportsDir`. */
+  discrepancies?: Record<string, KindCounts>;
+  unmappedRegions?: UnmappedRegionsDiff;
 }
 
 export function computeStats(
   oldSnapshot: DatasetSnapshot,
   newSnapshot: DatasetSnapshot,
   allocDiff: AllocationDiffResult,
-  discrepancyStats: Record<string, KindCounts>,
-  unmappedStats: UnmappedRegionsDiff,
+  discrepancyStats: Record<string, KindCounts> | undefined,
+  unmappedStats: UnmappedRegionsDiff | undefined,
 ): DiffStats {
   const oldByFile = new Map(oldSnapshot.meta.sourceFiles.map((f) => [f.file, f.sha256]));
   const sourceFiles = newSnapshot.meta.sourceFiles.map((f) => {
@@ -37,8 +38,8 @@ export function computeStats(
       mobile: allocDiff.countsByType.mobile,
       total: sumCounts(allocDiff.countsByType.fixed, allocDiff.countsByType.mobile),
     },
-    discrepancies: discrepancyStats,
-    unmappedRegions: unmappedStats,
+    ...(discrepancyStats !== undefined ? { discrepancies: discrepancyStats } : {}),
+    ...(unmappedStats !== undefined ? { unmappedRegions: unmappedStats } : {}),
   };
 }
 

@@ -56,13 +56,16 @@ describe('diff-dataset CLI (end-to-end)', () => {
   let oldDir: string;
   let newDir: string;
   let outDir: string;
+  let outDirNoReports: string;
   let cliOutput: string;
+  let cliOutputNoReports: string;
 
   beforeAll(() => {
     root = mkdtempSync(path.join(tmpdir(), 'ru-phone-base-diff-test-'));
     oldDir = path.join(root, 'old');
     newDir = path.join(root, 'new');
     outDir = path.join(root, 'out');
+    outDirNoReports = path.join(root, 'out-no-reports');
 
     writeSnapshot(
       oldDir,
@@ -136,6 +139,20 @@ describe('diff-dataset CLI (end-to-end)', () => {
       ],
       { cwd: process.cwd(), encoding: 'utf-8', timeout: 30_000 },
     );
+
+    cliOutputNoReports = execFileSync(
+      tsxBin,
+      [
+        'src/bin/diff-dataset.ts',
+        '--old',
+        oldDir,
+        '--new-data',
+        path.join(newDir, 'data'),
+        '--output',
+        outDirNoReports,
+      ],
+      { cwd: process.cwd(), encoding: 'utf-8', timeout: 30_000 },
+    );
   });
 
   afterAll(() => {
@@ -168,7 +185,8 @@ describe('diff-dataset CLI (end-to-end)', () => {
 
   it('reports discrepancy and unmapped-region deltas', () => {
     const stats = readOutput<DiffStats>('stats.json');
-    expect(stats.discrepancies['intra-file']).toEqual({ before: 1, after: 2, delta: 1 });
+    expect(stats.discrepancies).toBeDefined();
+    expect(stats.discrepancies?.['intra-file']).toEqual({ before: 1, after: 2, delta: 1 });
     expect(stats.unmappedRegions).toEqual({ before: 1, after: 2, newlyUnmapped: ['unknown2'], newlyResolved: [] });
   });
 
@@ -206,6 +224,14 @@ describe('diff-dataset CLI (end-to-end)', () => {
 
   it('does not write a PR-ready summary.md - that lives in tools/build-pr-summary.ts', () => {
     expect(() => readFileSync(path.join(outDir, 'summary.md'), 'utf-8')).toThrow();
+  });
+
+  it('omits discrepancies/unmappedRegions from stats.json when --new-reports is not passed, without affecting the allocation diff', () => {
+    const stats = JSON.parse(readFileSync(path.join(outDirNoReports, 'stats.json'), 'utf-8')) as DiffStats;
+    expect(stats.discrepancies).toBeUndefined();
+    expect(stats.unmappedRegions).toBeUndefined();
+    expect(stats.allocations.fixed).toEqual({ added: 1, removed: 1, changedData: 1, changedTimezone: 1, unchanged: 1 });
+    expect(cliOutputNoReports).toContain('not compared');
   });
 });
 

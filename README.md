@@ -11,7 +11,7 @@ Machine-readable Russian phone numbering plan: look up **region**, **operator**,
 - Timezones sourced from OpenStreetMap Overpass, resolved once at build time and cached — no network calls at runtime
 - Ships as both ESM and CommonJS, with TypeScript types
 - Works in Node.js and in the browser (bring your own JSON)
-- Includes a CLI to regenerate the dataset from a fresh copy of the registry
+- Includes CLIs to regenerate the dataset from a fresh copy of the registry and to diff two snapshots
 
 ## Install
 
@@ -201,6 +201,31 @@ npx ru-phone-base-build --output ./my-dataset
 | `--download`          | Force re-download of the raw CSVs even if already present.                                                                                                                                                                                                                        |
 | `--no-download`       | Fail instead of downloading if a required file is missing.                                                                                                                                                                                                                        |
 | `--refresh-timezones` | Bypass the OSM Overpass on-disk cache and re-fetch timezone data.                                                                                                                                                                                                                 |
+
+### Comparing two dataset snapshots
+
+To see what actually changed between two regenerations (new/removed/changed allocations, timezone changes, discrepancy and unmapped-region deltas), keep the old `--output` directory around and diff it against a fresh one:
+
+```bash
+npx ru-phone-base-build --output ./dataset-2026-07-18
+# ...time passes, registry updates...
+npx ru-phone-base-build --output ./dataset-2026-07-25
+
+npx ru-phone-base-diff \
+  --old ./dataset-2026-07-18 \
+  --new-data ./dataset-2026-07-25 \
+  --new-reports ./reports \
+  --output ./diff-2026-07-25
+```
+
+| Flag                  | Description                                                                                                                                                                                                                                                               |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--old <dir>`         | **(required)** A previous snapshot, laid out as `<dir>/data/*.json` + `<dir>/reports/*.json` (an old `--output` plus its sibling `reports/`, copied aside before regenerating).                                                                                           |
+| `--new-data <dir>`    | **(required)** The current compiled dataset dir (a fresh `--output`).                                                                                                                                                                                                     |
+| `--new-reports <dir>` | The current reports dir (the sibling `reports/` next to that `--output`). Optional — if omitted (or if `--old`'s `reports/` is missing), discrepancy/unmapped-region comparison is skipped and `stats.json` simply omits those fields; the allocation diff is unaffected. |
+| `--output <dir>`      | **(required)** Where to write `stats.json` (counts) and the detailed `allocations-added.json` / `allocations-removed.json` / `allocations-changed.json` / `timezone-changes.json` files.                                                                                  |
+
+`stats.json`/the detail files are meant for scripting or manual review — there's no bundled renderer for a human-readable report.
 
 ## Data sources
 

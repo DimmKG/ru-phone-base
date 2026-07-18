@@ -22,28 +22,27 @@ export function renderSummaryMarkdown(stats: DiffStats): string {
     );
   }
 
-  lines.push(
-    '',
-    '## Расхождения (`reports/discrepancies.json`)',
-    '',
-    '| Вид | Было | Стало | Δ |',
-    '|---|---|---|---|',
-  );
-  for (const [kind, c] of Object.entries(stats.discrepancies)) {
-    lines.push(`| ${kind} | ${c.before} | ${c.after} | ${c.delta >= 0 ? '+' : ''}${c.delta} |`);
+  lines.push('', '## Расхождения (`reports/discrepancies.json`)', '');
+  if (stats.discrepancies) {
+    lines.push('| Вид | Было | Стало | Δ |', '|---|---|---|---|');
+    for (const [kind, c] of Object.entries(stats.discrepancies)) {
+      lines.push(`| ${kind} | ${c.before} | ${c.after} | ${c.delta >= 0 ? '+' : ''}${c.delta} |`);
+    }
+  } else {
+    lines.push('Не сравнивалось — `reports/` недоступен для одного или обоих снапшотов.');
   }
 
-  lines.push(
-    '',
-    '## Несопоставленные токены регионов',
-    '',
-    `Было: ${stats.unmappedRegions.before}, стало: ${stats.unmappedRegions.after}`,
-  );
-  if (stats.unmappedRegions.newlyUnmapped.length) {
-    lines.push(`Новые несопоставленные: ${stats.unmappedRegions.newlyUnmapped.map((t) => `\`${t}\``).join(', ')}`);
-  }
-  if (stats.unmappedRegions.newlyResolved.length) {
-    lines.push(`Теперь сопоставлены: ${stats.unmappedRegions.newlyResolved.map((t) => `\`${t}\``).join(', ')}`);
+  lines.push('', '## Несопоставленные токены регионов', '');
+  if (stats.unmappedRegions) {
+    lines.push(`Было: ${stats.unmappedRegions.before}, стало: ${stats.unmappedRegions.after}`);
+    if (stats.unmappedRegions.newlyUnmapped.length) {
+      lines.push(`Новые несопоставленные: ${stats.unmappedRegions.newlyUnmapped.map((t) => `\`${t}\``).join(', ')}`);
+    }
+    if (stats.unmappedRegions.newlyResolved.length) {
+      lines.push(`Теперь сопоставлены: ${stats.unmappedRegions.newlyResolved.map((t) => `\`${t}\``).join(', ')}`);
+    }
+  } else {
+    lines.push('Не сравнивалось — `reports/` недоступен для одного или обоих снапшотов.');
   }
   lines.push('');
 
