@@ -135,22 +135,22 @@ export class DatasetIntegrityError extends Error {
 }
 
 /**
- * Thrown when the operators index does not match the expected operators file(s)
- * for the loaded tables — typically because the wrong operators mini-base was
+ * Thrown when the operators index does not cover INNs referenced by the loaded
+ * fixed/mobile tables — typically because the wrong operators mini-base was
  * paired with a table (e.g. `operators-mobile.json` with `fixed.json`).
  */
 export class DatasetOperatorsError extends Error {
   readonly tables: TableName[];
-  readonly expectedFiles: string[];
+  readonly missingInn: string;
 
-  constructor(tables: TableName[], expectedFiles: string[]) {
+  constructor(tables: TableName[], missingInn: string) {
     super(
-      `operators index does not match ${expectedFiles.join(' or ')} for the loaded ${tables.join('+')} table(s) ` +
+      `operators index is missing INN ${missingInn} required by the loaded ${tables.join('+')} table(s) ` +
         `(wrong operators mini-base?)`,
     );
     this.name = 'DatasetOperatorsError';
     this.tables = tables;
-    this.expectedFiles = expectedFiles;
+    this.missingInn = missingInn;
   }
 }
 
@@ -159,6 +159,25 @@ export function assertDatasetVersion(meta: { version?: unknown } | null | undefi
   const actual = meta && typeof meta === 'object' ? meta.version : undefined;
   if (typeof actual !== 'number' || actual !== DATASET_VERSION) {
     throw new DatasetVersionError(typeof actual === 'number' ? actual : undefined);
+  }
+}
+
+/**
+ * Ensures every INN referenced by the loaded fixed/mobile tables exists in
+ * `dataset.operators`. Throws on the first missing INN (wrong operators mini-base).
+ */
+export function assertOperatorsCoverTables(dataset: Dataset): void {
+  const tables: TableName[] = [
+    ...(dataset.fixed ? (['fixed'] as const) : []),
+    ...(dataset.mobile ? (['mobile'] as const) : []),
+  ];
+  for (const table of [dataset.fixed, dataset.mobile]) {
+    if (!table) continue;
+    for (const inn of table.o) {
+      if (dataset.operators[inn] === undefined) {
+        throw new DatasetOperatorsError(tables, inn);
+      }
+    }
   }
 }
 
