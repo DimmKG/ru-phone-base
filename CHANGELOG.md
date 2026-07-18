@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/DimmKG/ru-phone-base/compare/v1.1.0...v1.1.1) (2026-07-18)
+
+
+### Bug Fixes
+
+* make diff tool available in binaries ([2e9fc29](https://github.com/DimmKG/ru-phone-base/commit/2e9fc29df703571d18b2d3af311de80904a14169))
+
 # [1.1.0](https://github.com/DimmKG/ru-phone-base/compare/v1.0.2...v1.1.0) (2026-07-18)
 
 
