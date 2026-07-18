@@ -1,3 +1,11 @@
+# [1.1.0](https://github.com/DimmKG/ru-phone-base/compare/v1.0.2...v1.1.0) (2026-07-18)
+
+
+### Features
+
+* add diff database tool ([708c383](https://github.com/DimmKG/ru-phone-base/commit/708c3836835141cc7e5424b90acaee3193334961))
+* change lookup output type to reduce nullable fields ([58f29d6](https://github.com/DimmKG/ru-phone-base/commit/58f29d626fe91b18ac74b7ea100e9065727c677d))
+
 ## [1.0.2](https://github.com/DimmKG/ru-phone-base/compare/v1.0.1...v1.0.2) (2026-07-17)
 
 
