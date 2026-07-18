@@ -140,19 +140,16 @@ export class DatasetIntegrityError extends Error {
  * paired with a table (e.g. `operators-mobile.json` with `fixed.json`).
  */
 export class DatasetOperatorsError extends Error {
-  readonly missingInns: string[];
+  readonly missingCount: number;
   readonly tables: TableName[];
 
-  constructor(missingInns: string[], tables: TableName[]) {
-    const sample = missingInns.slice(0, 5).join(', ');
-    const more = missingInns.length > 5 ? ` (+${missingInns.length - 5} more)` : '';
-    const tableList = tables.join('+');
+  constructor(missingCount: number, tables: TableName[]) {
     super(
-      `operators index is missing ${missingInns.length} INN(s) required by the loaded ${tableList} table(s) ` +
-        `(wrong operators mini-base?). First missing: ${sample}${more}`,
+      `operators index is missing ${missingCount} INN(s) required by the loaded ${tables.join('+')} table(s) ` +
+        `(wrong operators mini-base?)`,
     );
     this.name = 'DatasetOperatorsError';
-    this.missingInns = missingInns;
+    this.missingCount = missingCount;
     this.tables = tables;
   }
 }
@@ -186,10 +183,7 @@ export function assertOperatorsCoverTables(dataset: Dataset): void {
     }
   }
   if (missing.size > 0) {
-    throw new DatasetOperatorsError(
-      [...missing].sort((a, b) => a.localeCompare(b)),
-      tables,
-    );
+    throw new DatasetOperatorsError(missing.size, tables);
   }
 }
 
