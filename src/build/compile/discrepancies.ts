@@ -30,6 +30,17 @@ export interface RegionMismatchEntry {
   regionColumnValue: string;
 }
 
+export interface DuplicateInnEntry {
+  kind: 'duplicate-inn';
+  inn: string;
+  /** The name kept for this INN - the first encountered variant that isn't ALL-CAPS, or the first encountered variant if every one of them is. */
+  canonicalName: string;
+  /** Other names the registry uses for the same INN, sorted for stable output. */
+  otherNames: string[];
+  /** True when every entry in `otherNames` is just a case variant of `canonicalName` (safe to fold away); false means at least one name genuinely differs (e.g. an abbreviation) and needs a human look. */
+  caseOnly: boolean;
+}
+
 function allocationSignature(entry: FlatEntry): string {
   return JSON.stringify({
     operator: entry.operator,
@@ -157,4 +168,79 @@ export function collectRegionMismatches(entries: FlatEntry[]): RegionMismatchEnt
     });
   }
   return result;
+}
+
+function isAllCaps(name: string): boolean {
+  return name === name.toUpperCase();
+}
+
+/** First non-ALL-CAPS name in registry-encounter order, or the first name if every variant is ALL-CAPS. No attempt is made to reconstruct "proper" casing. */
+function pickCanonicalName(names: string[]): string {
+  return names.find((name) => !isAllCaps(name)) ?? names[0];
+}
+
+/** Groups the distinct operator names seen for each INN, in first-encountered order. */
+function collectNamesByInn(entries: FlatEntry[]): Map<string, string[]> {
+  const namesByInn = new Map<string, string[]>();
+  const seenByInn = new Map<string, Set<string>>();
+  for (const entry of entries) {
+    let seenNames = seenByInn.get(entry.inn);
+    if (!seenNames) {
+      seenNames = new Set();
+      seenByInn.set(entry.inn, seenNames);
+      namesByInn.set(entry.inn, []);
+    }
+    if (!seenNames.has(entry.operator)) {
+      seenNames.add(entry.operator);
+      namesByInn.get(entry.inn)!.push(entry.operator);
+    }
+  }
+  return namesByInn;
+}
+
+/**
+ * Finds INNs claimed under more than one distinct operator name across the
+ * whole registry - typically an ALL-CAPS vs mixed-case spelling of the same
+ * legal entity, occasionally a genuine abbreviation/alternate name. This is
+ * the audit trail for what `resolveCanonicalOperatorNames` folds away when
+ * compiling the operators table: it only records the conflict against the
+ * original (pre-fold) entries, it does not merge or rewrite anything itself.
+ */
+export function findDuplicateInnOperators(entries: FlatEntry[]): DuplicateInnEntry[] {
+  const namesByInn = collectNamesByInn(entries);
+
+  const result: DuplicateInnEntry[] = [];
+  for (const [inn, names] of namesByInn) {
+    if (names.length < 2) continue;
+    const canonicalName = pickCanonicalName(names);
+    const otherNames = names.filter((name) => name !== canonicalName).sort((a, b) => a.localeCompare(b, 'ru'));
+    const caseOnly = otherNames.every((name) => name.toUpperCase() === canonicalName.toUpperCase());
+    result.push({ kind: 'duplicate-inn', inn, canonicalName, otherNames, caseOnly });
+  }
+  return result.sort((a, b) => a.inn.localeCompare(b.inn));
+}
+
+/**
+ * Maps every INN in the registry to a single canonical operator name (see
+ * `pickCanonicalName`), so the operators table gets one entry per real-world
+ * entity instead of one per spelling. Apply to entries *before*
+ * `buildRangeIndex`/`flattenRows`-derived tables are compiled; run
+ * `findDuplicateInnOperators` on the original entries first if you need the
+ * audit trail of what got folded.
+ */
+export function resolveCanonicalOperatorNames(entries: FlatEntry[]): Map<string, string> {
+  const namesByInn = collectNamesByInn(entries);
+  const canonicalNames = new Map<string, string>();
+  for (const [inn, names] of namesByInn) {
+    canonicalNames.set(inn, pickCanonicalName(names));
+  }
+  return canonicalNames;
+}
+
+/** Rewrites each entry's `operator` to its INN's canonical spelling (see `resolveCanonicalOperatorNames`); leaves everything else untouched. */
+export function applyCanonicalOperatorNames(entries: FlatEntry[], canonicalNames: Map<string, string>): FlatEntry[] {
+  return entries.map((entry) => {
+    const canonical = canonicalNames.get(entry.inn);
+    return canonical !== undefined && canonical !== entry.operator ? { ...entry, operator: canonical } : entry;
+  });
 }

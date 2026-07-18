@@ -1,1 +1,688 @@
-[{"kind":"gar-region-mismatch","sourceFile":"ABC-3xx","code":"346","from":7035000,"to":7035799,"garRegion":"khanty-mansi-ao","regionColumnValue":"sverdlovsk-oblast"},{"kind":"gar-region-mismatch","sourceFile":"ABC-3xx","code":"346","from":7060700,"to":7060799,"garRegion":"khanty-mansi-ao","regionColumnValue":"sverdlovsk-oblast"},{"kind":"gar-region-mismatch","sourceFile":"ABC-3xx","code":"385","from":8474400,"to":8474499,"garRegion":"voronezh-oblast","regionColumnValue":"altai-krai"},{"kind":"gar-region-mismatch","sourceFile":"ABC-3xx","code":"385","from":8475500,"to":8476299,"garRegion":"voronezh-oblast","regionColumnValue":"altai-krai"},{"kind":"gar-region-mismatch","sourceFile":"ABC-3xx","code":"385","from":8476400,"to":8476499,"garRegion":"voronezh-oblast","regionColumnValue":"altai-krai"},{"kind":"gar-region-mismatch","sourceFile":"ABC-4xx","code":"482","from":3234700,"to":3234703,"garRegion":"pskov-oblast","regionColumnValue":"tver-oblast"},{"kind":"gar-region-mismatch","sourceFile":"ABC-8xx","code":"811","from":5220172,"to":5221171,"garRegion":"kostroma-oblast","regionColumnValue":"pskov-oblast"},{"kind":"gar-region-mismatch","sourceFile":"ABC-8xx","code":"856","from":6253000,"to":6253999,"garRegion":"donetsk-pr","regionColumnValue":"krasnodar-krai"},{"kind":"gar-region-mismatch","sourceFile":"ABC-8xx","code":"856","from":6255000,"to":6255999,"garRegion":"donetsk-pr","regionColumnValue":"krasnodar-krai"}]
+[
+  {
+    "kind": "gar-region-mismatch",
+    "sourceFile": "ABC-3xx",
+    "code": "346",
+    "from": 7035000,
+    "to": 7035799,
+    "garRegion": "khanty-mansi-ao",
+    "regionColumnValue": "sverdlovsk-oblast"
+  },
+  {
+    "kind": "gar-region-mismatch",
+    "sourceFile": "ABC-3xx",
+    "code": "346",
+    "from": 7060700,
+    "to": 7060799,
+    "garRegion": "khanty-mansi-ao",
+    "regionColumnValue": "sverdlovsk-oblast"
+  },
+  {
+    "kind": "gar-region-mismatch",
+    "sourceFile": "ABC-3xx",
+    "code": "385",
+    "from": 8474400,
+    "to": 8474499,
+    "garRegion": "voronezh-oblast",
+    "regionColumnValue": "altai-krai"
+  },
+  {
+    "kind": "gar-region-mismatch",
+    "sourceFile": "ABC-3xx",
+    "code": "385",
+    "from": 8475500,
+    "to": 8476299,
+    "garRegion": "voronezh-oblast",
+    "regionColumnValue": "altai-krai"
+  },
+  {
+    "kind": "gar-region-mismatch",
+    "sourceFile": "ABC-3xx",
+    "code": "385",
+    "from": 8476400,
+    "to": 8476499,
+    "garRegion": "voronezh-oblast",
+    "regionColumnValue": "altai-krai"
+  },
+  {
+    "kind": "gar-region-mismatch",
+    "sourceFile": "ABC-4xx",
+    "code": "482",
+    "from": 3234700,
+    "to": 3234703,
+    "garRegion": "pskov-oblast",
+    "regionColumnValue": "tver-oblast"
+  },
+  {
+    "kind": "gar-region-mismatch",
+    "sourceFile": "ABC-8xx",
+    "code": "811",
+    "from": 5220172,
+    "to": 5221171,
+    "garRegion": "kostroma-oblast",
+    "regionColumnValue": "pskov-oblast"
+  },
+  {
+    "kind": "gar-region-mismatch",
+    "sourceFile": "ABC-8xx",
+    "code": "856",
+    "from": 6253000,
+    "to": 6253999,
+    "garRegion": "donetsk-pr",
+    "regionColumnValue": "krasnodar-krai"
+  },
+  {
+    "kind": "gar-region-mismatch",
+    "sourceFile": "ABC-8xx",
+    "code": "856",
+    "from": 6255000,
+    "to": 6255999,
+    "garRegion": "donetsk-pr",
+    "regionColumnValue": "krasnodar-krai"
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "1681000024",
+    "canonicalName": "ПАО \"Таттелеком\"",
+    "otherNames": [
+      "ПАО \"ТАТТЕЛЕКОМ\""
+    ],
+    "caseOnly": true
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "1831083343",
+    "canonicalName": "АО \"ИЭМЗ \"Купол\"",
+    "otherNames": [
+      "АО \"ИЭМЗ \"КУПОЛ\""
+    ],
+    "caseOnly": true
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "1831084185",
+    "canonicalName": "ООО \"ИСТ\"",
+    "otherNames": [
+      "ООО \"ИЖЕВСКИЕ СЕТЕВЫЕ ТЕХНОЛОГИИ\""
+    ],
+    "caseOnly": false
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "2014016741",
+    "canonicalName": "Акционерное общество \"Электросвязь\" в Чеченской Республике",
+    "otherNames": [
+      "АО \"ЭЛЕКТРОСВЯЗЬ\" В ЧР"
+    ],
+    "caseOnly": false
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "2308210371",
+    "canonicalName": "ООО \"К-телеком\"",
+    "otherNames": [
+      "ООО \"К-ТЕЛЕКОМ\""
+    ],
+    "caseOnly": true
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "2315004404",
+    "canonicalName": "ПАО \"Новороссийский морской торговый порт\"",
+    "otherNames": [
+      "ПАО \"НМТП\""
+    ],
+    "caseOnly": false
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "2320105623",
+    "canonicalName": "ООО \"Первая сеть\"",
+    "otherNames": [
+      "ООО \"ПЕРВАЯ СЕТЬ\""
+    ],
+    "caseOnly": true
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "2466092240",
+    "canonicalName": "ООО \"ИГРА-СЕРВИС\"",
+    "otherNames": [
+      "ООО \" ИГРА-СЕРВИС\""
+    ],
+    "caseOnly": false
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "2626045442",
+    "canonicalName": "ООО \"КМВтелеком\"",
+    "otherNames": [
+      "ООО \"КМВТЕЛЕКОМ\""
+    ],
+    "caseOnly": true
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "3811030192",
+    "canonicalName": "ООО \"Связьтранзит\"",
+    "otherNames": [
+      "ООО \"СВЯЗЬТРАНЗИТ\""
+    ],
+    "caseOnly": true
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "3905040140",
+    "canonicalName": "ЗАО \"Центрсвязь\"",
+    "otherNames": [
+      "ЗАО \"ЦЕНТРСВЯЗЬ\""
+    ],
+    "caseOnly": true
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "5031023960",
+    "canonicalName": "АО \"Компания местной связи\"",
+    "otherNames": [
+      "АО \"КОМЕС\""
+    ],
+    "caseOnly": false
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "5048036808",
+    "canonicalName": "ООО \"Облком\"",
+    "otherNames": [
+      "ООО \"ОБЛКОМ\""
+    ],
+    "caseOnly": true
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "5835025759",
+    "canonicalName": "ЗАО \"Золотая линия\"",
+    "otherNames": [
+      "АО \"ЗОЛОТАЯ ЛИНИЯ\""
+    ],
+    "caseOnly": false
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "5902196801",
+    "canonicalName": "ООО \"Сателлит-Сервис\"",
+    "otherNames": [
+      "ООО \"САТЕЛЛИТ-СЕРВИС\""
+    ],
+    "caseOnly": true
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "5902197410",
+    "canonicalName": "ООО \"Компьютерные Коммуникационные Системы\"",
+    "otherNames": [
+      "ООО \"КОКОС\""
+    ],
+    "caseOnly": false
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "6314011847",
+    "canonicalName": "ООО \"ВГТ\"",
+    "otherNames": [
+      "ООО \"ВОЛГОГАЗТЕЛЕКОМ\""
+    ],
+    "caseOnly": false
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "6661079603",
+    "canonicalName": "ООО\"ЕКАТЕРИНБУРГ-2000\"",
+    "otherNames": [
+      "ООО \"ЕКАТЕРИНБУРГ-2000\""
+    ],
+    "caseOnly": false
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "6670019135",
+    "canonicalName": "ООО \"Комтехцентр\"",
+    "otherNames": [
+      "ООО \"КОМТЕХЦЕНТР\""
+    ],
+    "caseOnly": true
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "6952036241",
+    "canonicalName": "ООО \"АТ консалтинг\"",
+    "otherNames": [
+      "ООО \"АТ КОНСАЛТИНГ\""
+    ],
+    "caseOnly": true
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "7024043493",
+    "canonicalName": "ООО \"СЭЛС\"",
+    "otherNames": [
+      "ООО \"СЕВЕРСКЭЛЕКТРОСВЯЗЬ\""
+    ],
+    "caseOnly": false
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "7116006212",
+    "canonicalName": "АО \"Росин.телеком\"",
+    "otherNames": [
+      "АО \"РОСИН.ТЕЛ\"",
+      "АО\"РОСИН.ТЕЛ\""
+    ],
+    "caseOnly": false
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "7536050140",
+    "canonicalName": "ООО \"МегаЛинк\"",
+    "otherNames": [
+      "ООО \"МЕГАЛИНК\""
+    ],
+    "caseOnly": true
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "7701725181",
+    "canonicalName": "ООО \"Скартел\"",
+    "otherNames": [
+      "ООО \"СКАРТЕЛ\""
+    ],
+    "caseOnly": true
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "7702527584",
+    "canonicalName": "ООО \"Миранда-медиа\"",
+    "otherNames": [
+      "ООО \"МИРАНДА-МЕДИА\""
+    ],
+    "caseOnly": true
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "7702764401",
+    "canonicalName": "ООО \"Фастком\"",
+    "otherNames": [
+      "ООО \"ФАСТКОМ\""
+    ],
+    "caseOnly": true
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "7704313813",
+    "canonicalName": "ООО \"Объединенная телекоммуникационная корпорация\"",
+    "otherNames": [
+      "ООО \"ОТК\""
+    ],
+    "caseOnly": false
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "7705514400",
+    "canonicalName": "ООО \"ИНФОРМ\"",
+    "otherNames": [
+      "ООО \"ЛУКОЙЛ-ИНФОРМ\""
+    ],
+    "caseOnly": false
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "7707049388",
+    "canonicalName": "ПАО \"Ростелеком\"",
+    "otherNames": [
+      "ПАО \"РОСТЕЛЕКОМ\""
+    ],
+    "caseOnly": true
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "7709362765",
+    "canonicalName": "ООО \"ТТК-Связь\"",
+    "otherNames": [
+      "ООО \"ТТК-СВЯЗЬ\""
+    ],
+    "caseOnly": true
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "7709501144",
+    "canonicalName": "ООО \"Манго Телеком\"",
+    "otherNames": [
+      "ООО \"МАНГО ТЕЛЕКОМ\""
+    ],
+    "caseOnly": true
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "7709562556",
+    "canonicalName": "ООО \"ТРАНСПОРТНАЯ ТЕЛЕКОММУНИКАЦИОННАЯ КОМПАНИЯ\"",
+    "otherNames": [
+      "ООО \"ТТК\""
+    ],
+    "caseOnly": false
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "7712091843",
+    "canonicalName": "АО \"НэтЛайн\"",
+    "otherNames": [
+      "АО \"НЭТЛАЙН\"",
+      "ЗАО \"НэтЛайн\""
+    ],
+    "caseOnly": false
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "7713076301",
+    "canonicalName": "ПАО \"Вымпел-Коммуникации\"",
+    "otherNames": [
+      "ПАО \"ВЫМПЕЛКОМ\""
+    ],
+    "caseOnly": false
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "7713480948",
+    "canonicalName": "ООО \"ТЕЛЕКОМ ЦЕНТР\"",
+    "otherNames": [
+      "ООО \"ЭР-ТЕЛЕКОМ МОСКВА\""
+    ],
+    "caseOnly": false
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "7714158099",
+    "canonicalName": "ООО \"Наука-Связь\"",
+    "otherNames": [
+      "ООО \"НАУКА-СВЯЗЬ\""
+    ],
+    "caseOnly": true
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "7717020170",
+    "canonicalName": "АО \"КОМКОР\"",
+    "otherNames": [
+      "ОАО \"КОМКОР\""
+    ],
+    "caseOnly": false
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "7722553712",
+    "canonicalName": "ООО \"ЮнитТелеком\"",
+    "otherNames": [
+      "ООО \"ЮНИТТЕЛ\""
+    ],
+    "caseOnly": false
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "7723613650",
+    "canonicalName": "ООО \"Спринт\"",
+    "otherNames": [
+      "ООО \"СПРИНТ\""
+    ],
+    "caseOnly": true
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "7725153180",
+    "canonicalName": "ООО \"Универсум бит\"",
+    "otherNames": [
+      "ООО \"УНИВЕРСУМ БИТ\""
+    ],
+    "caseOnly": true
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "7727752084",
+    "canonicalName": "ООО \"МСН Телеком\"",
+    "otherNames": [
+      "ООО \"МСН ТЕЛЕКОМ\""
+    ],
+    "caseOnly": true
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "7734236387",
+    "canonicalName": "ООО \"Телеком сервис Т\"",
+    "otherNames": [
+      "ООО \"ТЕЛЕКОМ СЕРВИС Т\""
+    ],
+    "caseOnly": true
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "7735143350",
+    "canonicalName": "ООО \"ДАТАПЛЭНЕТ\"",
+    "otherNames": [
+      "ООО \"ДАПЛ\""
+    ],
+    "caseOnly": false
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "7736264044",
+    "canonicalName": "ООО \"Сбербанк-Телеком\"",
+    "otherNames": [
+      "ООО \"СБЕРБАНК-ТЕЛЕКОМ\""
+    ],
+    "caseOnly": true
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "7736581195",
+    "canonicalName": "ООО \"Инжиниринговый центр ФосАгро\"",
+    "otherNames": [
+      "ООО \"ИЦ ФОСАГРО\""
+    ],
+    "caseOnly": false
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "7740000020",
+    "canonicalName": "ООО \"Газпром телеком\"",
+    "otherNames": [
+      "ООО \"ГАЗПРОМ ТЕЛЕКОМ\""
+    ],
+    "caseOnly": true
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "7740000076",
+    "canonicalName": "ПАО \"Мобильные ТелеСистемы\"",
+    "otherNames": [
+      "ПАО \"МТС\""
+    ],
+    "caseOnly": false
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "7743054859",
+    "canonicalName": "ЗАО \"БИГ Телеком\"",
+    "otherNames": [
+      "АО \"БИГ ТЕЛЕКОМ\""
+    ],
+    "caseOnly": false
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "7743794123",
+    "canonicalName": "ООО \"ТК ТЕЛ\"",
+    "otherNames": [
+      "ООО  \"ТК ТЕЛ\""
+    ],
+    "caseOnly": false
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "7743895280",
+    "canonicalName": "ООО \"Т2 Мобайл\"",
+    "otherNames": [
+      "ООО \"Т2 МОБАЙЛ\""
+    ],
+    "caseOnly": true
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "7802594898",
+    "canonicalName": "ООО \"ПТФ\" (ИНН 7802594898)",
+    "otherNames": [
+      "ООО \"ПТФ\""
+    ],
+    "caseOnly": false
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "7812014560",
+    "canonicalName": "ПАО \"МегаФон\"",
+    "otherNames": [
+      "ПАО \"МЕГАФОН\""
+    ],
+    "caseOnly": true
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "7813220816",
+    "canonicalName": "ООО \"Деловая связь\"",
+    "otherNames": [
+      "ООО \"ДЕЛОВАЯ СВЯЗЬ\""
+    ],
+    "caseOnly": true
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "7814534043",
+    "canonicalName": "ООО \"Унител\"",
+    "otherNames": [
+      "ООО \"УНИТЕЛ\""
+    ],
+    "caseOnly": true
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "7816055208",
+    "canonicalName": "АО \"РАСКОМ\"",
+    "otherNames": [
+      "ЗАО \"РАСКОМ\""
+    ],
+    "caseOnly": false
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "7816181675",
+    "canonicalName": "АО \"Северен-Телеком\"",
+    "otherNames": [
+      "АО \"СЕВЕРЕН-ТЕЛЕКОМ\""
+    ],
+    "caseOnly": true
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "7816524629",
+    "canonicalName": "ООО \"Нью-Тел\"",
+    "otherNames": [
+      "ООО \"НЬЮ-ТЕЛ\""
+    ],
+    "caseOnly": true
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "7839421789",
+    "canonicalName": "ООО \"В-Телеком\"",
+    "otherNames": [
+      "ООО \"В-ТЕЛЕКОМ\""
+    ],
+    "caseOnly": true
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "7841482919",
+    "canonicalName": "ООО \"МиАТел\"",
+    "otherNames": [
+      "ООО \"МИАТЕЛ\""
+    ],
+    "caseOnly": true
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "9102250133",
+    "canonicalName": "Акционерное общество \"Крымтелеком\"",
+    "otherNames": [
+      "АО \"КРЫМТЕЛЕКОМ\""
+    ],
+    "caseOnly": false
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "9102282270",
+    "canonicalName": "ООО \"МирТелеком\"",
+    "otherNames": [
+      "ООО \"МИРТЕЛЕКОМ\""
+    ],
+    "caseOnly": true
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "9204556603",
+    "canonicalName": "ООО \"Юг Бизнес Связь\"",
+    "otherNames": [
+      "ООО \"ЮБИС\""
+    ],
+    "caseOnly": false
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "9204569240",
+    "canonicalName": "АО \"Севастополь Телеком\"",
+    "otherNames": [
+      "АО \"СЕВТЕЛЕКОМ\""
+    ],
+    "caseOnly": false
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "9308013351",
+    "canonicalName": "ГУП ДНР \"РОС\"",
+    "otherNames": [
+      "ГОСУДАРСТВЕННОЕ УНИТАРНОЕ ПРЕДПРИЯТИЕ ДОНЕЦКОЙ НАРОДНОЙ РЕСПУБЛИКИ «РЕСПУБЛИКАНСКИЙ ОПЕРАТОР СВЯЗИ»"
+    ],
+    "caseOnly": false
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "9402011009",
+    "canonicalName": "ООО \"МКС\"",
+    "otherNames": [
+      "ООО \"МОБИЛЬНЫЕ КОММУНИКАЦИОННЫЕ СИСТЕМЫ\""
+    ],
+    "caseOnly": false
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "9705251105",
+    "canonicalName": "АО \"ХЭДВИГ\"",
+    "otherNames": [
+      "АКЦИОНЕРНОЕ ОБЩЕСТВО \"ХЭДВИГ\""
+    ],
+    "caseOnly": false
+  },
+  {
+    "kind": "duplicate-inn",
+    "inn": "9721155374",
+    "canonicalName": "ООО \"Группа компаний \"Альфа Онлайн\"\"",
+    "otherNames": [
+      "ООО \"ГРУППА КОМПАНИЙ \"АЛЬФА ОНЛАЙН\""
+    ],
+    "caseOnly": false
+  }
+]

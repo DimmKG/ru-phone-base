@@ -10,7 +10,12 @@ import {
   findIntraFileConflicts,
   findParallelAllocationConflicts,
   collectRegionMismatches,
+  findDuplicateInnOperators,
+  resolveCanonicalOperatorNames,
+  applyCanonicalOperatorNames,
 } from './compile/discrepancies.js';
+import { QUIRKS, applyOrganizationNameQuirks, applyAllocationFieldQuirks } from './compile/quirks.js';
+import { loadUserQuirks } from './compile/loadQuirks.js';
 import { fetchSubjectTimezones } from './osm/fetchSubjectTimezones.js';
 import type { NormalizedRow, SourceFile } from './parse/types.js';
 
@@ -23,11 +28,14 @@ export interface BuildOptions {
   osmCacheDir?: string;
   /** Re-fetch OSM timezone data instead of using the on-disk cache. */
   refreshTimezones?: boolean;
+  /** Path to a .json/.js/.ts file exporting extra quirks (see loadQuirks.ts) - applied after the built-in ones in quirks.ts. */
+  userQuirksFile?: string;
 }
 
 export interface BuildReport {
   unmappedRegions: string[];
   discrepancies: unknown[];
+  quirks: unknown[];
 }
 
 const FIXED_FILES: { file: string; sourceFile: SourceFile }[] = [
@@ -37,12 +45,22 @@ const FIXED_FILES: { file: string; sourceFile: SourceFile }[] = [
 ];
 const MOBILE_FILE = { file: 'DEF-9xx.csv', sourceFile: 'DEF-9xx' as const };
 
+const STAGE_COUNT = 6;
+
+function logStage(n: number, message: string): void {
+  console.log(`[${n}/${STAGE_COUNT}] ${message}`);
+}
+
 export async function buildDataset(
   inputDir: string,
   outputDir: string,
   options: BuildOptions = {},
 ): Promise<BuildReport> {
-  const { download = true, forceDownload = false, osmCacheDir, refreshTimezones = false } = options;
+  const { download = true, forceDownload = false, osmCacheDir, refreshTimezones = false, userQuirksFile } = options;
+
+  // User-supplied quirks (see loadQuirks.ts) are appended after the built-in
+  // ones, so they're applied last and can override/extend them.
+  const allQuirks = userQuirksFile ? [...QUIRKS, ...(await loadUserQuirks(userQuirksFile))] : QUIRKS;
 
   if (forceDownload) {
     await downloadRawData(inputDir, { force: true });
@@ -50,8 +68,11 @@ export async function buildDataset(
     await downloadRawData(inputDir);
   }
 
+  logStage(1, `Parsing raw registry CSVs from ${inputDir}...`);
   const fixedParsed = FIXED_FILES.map(({ file, sourceFile }) => parseAbcDef(path.join(inputDir, file), sourceFile));
   const mobileParsed = parseAbcDef(path.join(inputDir, MOBILE_FILE.file), MOBILE_FILE.sourceFile);
+  const totalRows = fixedParsed.reduce((sum, p) => sum + p.rows.length, 0) + mobileParsed.rows.length;
+  console.log(`  parsed ${totalRows} rows across ${FIXED_FILES.length + 1} files`);
 
   const allRowSets = [...fixedParsed.map((p) => p.rows), mobileParsed.rows];
   const unmappedRegions = collectUnmapped(allRowSets);
@@ -59,11 +80,17 @@ export async function buildDataset(
   const fixedEntrySets = fixedParsed.map((p) => flattenRows(p.rows));
   const mobileEntries = flattenRows(mobileParsed.rows);
 
-  const fixed = mergeCodeTables(fixedEntrySets.map(buildRangeIndex));
-  const mobile = buildRangeIndex(mobileEntries);
-
   const capacityMismatches: CapacityMismatch[] = [...fixedParsed, mobileParsed].flatMap((p) => p.capacityMismatches);
 
+  // Duplicate-INN check runs over the whole registry (fixed + mobile combined),
+  // not per source file - the same legal entity's INN can show up under
+  // slightly different spellings in both tables (e.g. Ростелеком).
+  const allEntries = [...fixedEntrySets.flat(), ...mobileEntries];
+
+  logStage(
+    2,
+    'Checking for discrepancies (parallel allocations, intra-file conflicts, region mismatches, duplicate INNs)...',
+  );
   const discrepancies: unknown[] = [
     ...capacityMismatches,
     ...fixedEntrySets.flatMap(findParallelAllocationConflicts),
@@ -72,10 +99,54 @@ export async function buildDataset(
     ...findIntraFileConflicts(mobileEntries),
     ...fixedEntrySets.flatMap(collectRegionMismatches),
     ...collectRegionMismatches(mobileEntries),
+    ...findDuplicateInnOperators(allEntries),
   ];
+  console.log(`  found ${discrepancies.length} discrepanc(y/ies), ${unmappedRegions.length} unmapped region token(s)`);
 
+  logStage(3, 'Resolving canonical operator names and applying quirks...');
+  // Fold same-INN spelling variants (ALL-CAPS vs mixed-case, abbreviations, ...)
+  // into one canonical operator name per INN before compiling the operators
+  // table, so the published dataset has a single entry per real-world entity.
+  // The variants themselves are only preserved in the discrepancies report above.
+  const autoCanonicalNames = resolveCanonicalOperatorNames(allEntries);
+  // Hand-verified overrides on top of the auto-picked names (see quirks.ts) -
+  // for cases the case-based heuristic can't get right on its own.
+  const { canonicalNames, applications: organizationNameQuirks } = applyOrganizationNameQuirks(
+    autoCanonicalNames,
+    allQuirks,
+  );
+
+  const namedFixedEntrySets = fixedEntrySets.map((entries) => applyCanonicalOperatorNames(entries, canonicalNames));
+  const namedMobileEntries = applyCanonicalOperatorNames(mobileEntries, canonicalNames);
+
+  // Per-row overrides (wrong region/settlement/etc on one specific allocation)
+  // are matched by [sourceFile, code, from, to, inn], so they're applied over
+  // the combined fixed+mobile list, then split back into the original
+  // per-source-file groups buildRangeIndex/mergeCodeTables expect.
+  const namedEntrySetSizes = [...namedFixedEntrySets.map((entries) => entries.length), namedMobileEntries.length];
+  const { entries: quirkedEntries, applications: allocationFieldQuirks } = applyAllocationFieldQuirks(
+    [...namedFixedEntrySets.flat(), ...namedMobileEntries],
+    allQuirks,
+  );
+  const quirkedGroups = splitAt(quirkedEntries, namedEntrySetSizes);
+  const quirkedFixedEntrySets = quirkedGroups.slice(0, -1);
+  const quirkedMobileEntries = quirkedGroups[quirkedGroups.length - 1];
+
+  const quirks: unknown[] = [...organizationNameQuirks, ...allocationFieldQuirks];
+  console.log(`  applied ${quirks.length} quirk(s)`);
+
+  logStage(4, 'Compiling range-index tables (fixed/mobile)...');
+  const fixed = mergeCodeTables(quirkedFixedEntrySets.map(buildRangeIndex));
+  const mobile = buildRangeIndex(quirkedMobileEntries);
+  console.log(`  ${fixed.o.length} fixed-line operator(s), ${mobile.o.length} mobile operator(s)`);
+
+  logStage(5, 'Resolving timezones (OSM Overpass, cached on disk)...');
   const timezoneResult = await fetchSubjectTimezones({ cacheDir: osmCacheDir, refresh: refreshTimezones });
+  console.log(
+    `  ${timezoneResult.matchedFromOsm.length} matched from OSM, ${timezoneResult.filledFromFallback.length} filled from fallback, ${timezoneResult.unresolved.length} unresolved`,
+  );
 
+  logStage(6, `Writing dataset to ${outputDir} and reports alongside it...`);
   mkdirSync(outputDir, { recursive: true });
   writeJson(path.join(outputDir, 'fixed.json'), fixed);
   writeJson(path.join(outputDir, 'mobile.json'), mobile);
@@ -107,10 +178,21 @@ export async function buildDataset(
   // somewhere predictable for local inspection/commit.
   const reportsDir = path.join(path.dirname(outputDir), 'reports');
   mkdirSync(reportsDir, { recursive: true });
-  writeJson(path.join(reportsDir, 'unmapped-regions.json'), unmappedRegions);
-  writeJson(path.join(reportsDir, 'discrepancies.json'), discrepancies);
+  writeFormattedJson(path.join(reportsDir, 'unmapped-regions.json'), unmappedRegions);
+  writeFormattedJson(path.join(reportsDir, 'discrepancies.json'), discrepancies);
+  writeFormattedJson(path.join(reportsDir, 'quirks.json'), quirks);
 
-  return { unmappedRegions, discrepancies };
+  return { unmappedRegions, discrepancies, quirks };
+}
+
+/** Splits `items` into consecutive groups of the given `sizes`, in order. */
+function splitAt<T>(items: T[], sizes: number[]): T[][] {
+  let offset = 0;
+  return sizes.map((size) => {
+    const group = items.slice(offset, offset + size);
+    offset += size;
+    return group;
+  });
 }
 
 function collectUnmapped(rowSets: NormalizedRow[][]): string[] {
@@ -153,6 +235,11 @@ function mergeCodeTables(tables: CompiledCodeTable[]): CompiledCodeTable {
 
 function writeJson(filePath: string, data: unknown): void {
   writeFileSync(filePath, JSON.stringify(data));
+}
+
+/** For reports/*.json (not the published dataset) - these are read by humans, not bundled, so pretty-print them. */
+function writeFormattedJson(filePath: string, data: unknown): void {
+  writeFileSync(filePath, JSON.stringify(data, null, 2) + '\n');
 }
 
 function fileMeta(filePath: string, name: string): { file: string; sha256: string } {

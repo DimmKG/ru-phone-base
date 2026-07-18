@@ -195,12 +195,59 @@ npx ru-phone-base-build --output ./my-dataset
 
 | Flag                  | Description                                                                                                                                                                                                                                                                       |
 | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--output <dir>`      | **(required)** Directory to write the compiled dataset into. A sibling `reports/` directory (`discrepancies.json`, `unmapped-regions.json`) is written alongside it for inspection — it's not part of the dataset itself and isn't published with the package.                    |
+| `--output <dir>`      | **(required)** Directory to write the compiled dataset into. A sibling `reports/` directory (`discrepancies.json`, `unmapped-regions.json`, `quirks.json`) is written alongside it for inspection — it's not part of the dataset itself and isn't published with the package.     |
 | `--input <dir>`       | Directory with the raw registry CSVs (default: a `ru-phone-base-raw` folder under the OS temp directory). Missing files are downloaded automatically from [opendata.digital.gov.ru](https://opendata.digital.gov.ru/registry/numeric/downloads) unless `--no-download` is passed. |
 | `--osm-cache <dir>`   | OSM Overpass response cache directory (default: a `ru-phone-base-osm-cache` folder under the OS temp directory).                                                                                                                                                                  |
 | `--download`          | Force re-download of the raw CSVs even if already present.                                                                                                                                                                                                                        |
 | `--no-download`       | Fail instead of downloading if a required file is missing.                                                                                                                                                                                                                        |
 | `--refresh-timezones` | Bypass the OSM Overpass on-disk cache and re-fetch timezone data.                                                                                                                                                                                                                 |
+| `--quirks <file>`     | Extra manual data corrections to apply on top of the built-in ones — see [Quirks](#quirks--manual-data-corrections) below.                                                                                                                                                        |
+
+### Quirks — manual data corrections
+
+Some rows in the source registry have mistakes an automatic heuristic can't safely fix on its own: a missing space, an obsolete legal form (`ОАО`/`ЗАО`, both retired in favor of `ПАО`/`АО` in 2014), stray text baked into a name, a wrong region on one specific row. These are corrected by hand as **quirks** — declarative entries in [`src/build/compile/quirks.ts`](./src/build/compile/quirks.ts), applied automatically on every build. Every quirk that actually changes something is logged with its before/after value to `reports/quirks.json`; a quirk that stops matching anything (e.g. a later registry update already fixed it upstream) doesn't fail the build — it's logged as a console warning instead, so a stale fix is visible without being able to block a build.
+
+Four kinds, covering both one-off fixes and systematic patterns:
+
+| Kind                     | Scope                                       | Use for                                                            |
+| ------------------------ | ------------------------------------------- | ------------------------------------------------------------------ |
+| `organization-name`      | One INN                                     | A single organization's name is wrong (e.g. `ООО"Х"` → `ООО "Х"`). |
+| `organization-name-rule` | Every INN a function matches                | A pattern across many organizations (e.g. `ОАО ...` → `ПАО ...`).  |
+| `allocation-field`       | One `[sourceFile, code, from, to, inn]` row | One specific allocation's region/settlement/operator/INN is wrong. |
+| `allocation-field-rule`  | Every allocation row a function matches     | A pattern across many allocations.                                 |
+
+Add your own on top, without touching the built-in list, via `--quirks <file>` — applied _after_ the built-in ones, so they can override or extend them:
+
+```bash
+npx ru-phone-base-build --output ./my-dataset --quirks ./my-quirks.json
+```
+
+`.json` files hold plain data — only `organization-name`/`allocation-field` (the `*-rule` kinds need a function and can't be expressed in JSON):
+
+```json
+[{ "kind": "organization-name", "inn": "1234567890", "to": "ООО \"Правильное имя\"", "reason": "typo in the registry" }]
+```
+
+`.js`/`.mjs`/`.cjs`/`.ts` files export an array of quirks (default export, or a named `QUIRKS` export) and can use any of the four kinds, including the function-based rules — see [`quirks.ts`](./src/build/compile/quirks.ts) for the exact shape:
+
+```js
+// my-quirks.mjs
+export default [
+  { kind: 'organization-name', inn: '1234567890', to: 'ООО "Правильное имя"', reason: 'typo in the registry' },
+  {
+    kind: 'organization-name-rule',
+    id: 'my-rule',
+    reason: 'normalize a legacy abbreviation across every INN that uses it',
+    apply: (namesByInn) => {
+      const result = new Map(namesByInn);
+      for (const [inn, name] of namesByInn) if (name.startsWith('ст. ')) result.set(inn, 'станция ' + name.slice(4));
+      return result;
+    },
+  },
+];
+```
+
+Native `.ts` execution depends on the runtime loading it — works when run through `tsx` (as this project's own `npm run build:data` does) or under a test runner; a plain `node` run of the published `ru-phone-base-build` binary needs a `.js`/`.mjs`/`.cjs` file instead (or a separate TS loader).
 
 ### Comparing two dataset snapshots
 

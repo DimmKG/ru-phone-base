@@ -13,6 +13,7 @@ function parseArgs(argv: string[]) {
     download: true,
     forceDownload: false,
     refreshTimezones: false,
+    quirks: undefined as string | undefined,
   };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
@@ -34,6 +35,9 @@ function parseArgs(argv: string[]) {
         break;
       case '--refresh-timezones':
         args.refreshTimezones = true;
+        break;
+      case '--quirks':
+        args.quirks = argv[++i];
         break;
       case '--help':
       case '-h':
@@ -64,6 +68,9 @@ Options:
   --download              Force re-download of the raw CSVs even if already present in --input
   --no-download           Fail instead of downloading if a required raw CSV is missing
   --refresh-timezones     Bypass the OSM Overpass on-disk cache and re-fetch timezone data
+  --quirks <file>         .json/.js/.ts file exporting extra quirks (organization renames, allocation
+                          field overrides, ...) - applied after the built-in ones in src/build/compile/quirks.ts.
+                          See that file and loadQuirks.ts for the expected shape.
   -h, --help              Show this help
 `);
 }
@@ -86,10 +93,11 @@ async function main() {
     forceDownload: args.forceDownload,
     osmCacheDir,
     refreshTimezones: args.refreshTimezones,
+    userQuirksFile: args.quirks,
   });
 
   console.log(
-    `Done. ${report.unmappedRegions.length} unmapped region token(s), ${report.discrepancies.length} discrepanc(y/ies) logged.`,
+    `Done. ${report.unmappedRegions.length} unmapped region token(s), ${report.discrepancies.length} discrepanc(y/ies), ${report.quirks.length} quirk(s) applied.`,
   );
   if (report.unmappedRegions.length > 0) {
     console.warn('Unmapped region tokens (see reports/unmapped-regions.json):', report.unmappedRegions);
