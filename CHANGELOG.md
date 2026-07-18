@@ -1,3 +1,11 @@
+# [1.2.0](https://github.com/DimmKG/ru-phone-base/compare/v1.1.1...v1.2.0) (2026-07-18)
+
+
+### Features
+
+* add organizations db ([cae0839](https://github.com/DimmKG/ru-phone-base/commit/cae0839ddd8e3f0ab2b6b192e508a5749674bf1e))
+* sanitize database, add quirks system ([b70c729](https://github.com/DimmKG/ru-phone-base/commit/b70c7299a950e0e35a5ffc31db124f07327593e3))
+
 ## [1.1.1](https://github.com/DimmKG/ru-phone-base/compare/v1.1.0...v1.1.1) (2026-07-18)
 
 
