@@ -3,9 +3,9 @@ import { createRuPhoneBase } from '../../src/index.js';
 import { loadDataset } from '../../src/dataLoader.js';
 import type { CompiledCodeTable, LookupResult, PhoneNumberInfo } from '../../src/types.js';
 
-const { lookupPhoneNumber, getRegions } = createRuPhoneBase();
+const { lookupPhoneNumber, getRegions, getOperators, getOperatorByInn } = createRuPhoneBase();
 const dataset = loadDataset();
-// The default load includes all three tables - assert that for the rest of this file.
+// The default load includes both lookup tables - assert that for the rest of this file.
 const fixedTable = dataset.fixed!;
 const mobileTable = dataset.mobile!;
 
@@ -262,5 +262,32 @@ describe('getRegions', () => {
   it('does not list the internal non-geographic "all-russia" marker - it is not a real region', () => {
     const allRussia = getRegions().find((r) => r.slug === 'all-russia');
     expect(allRussia).toBeUndefined();
+  });
+});
+
+describe('getOperators / getOperatorByInn', () => {
+  it('lists every operator once per INN, sorted by name', () => {
+    const operators = getOperators();
+    expect(operators.length).toBeGreaterThan(500);
+
+    const inns = operators.map((o) => o.inn);
+    expect(new Set(inns).size).toBe(inns.length);
+
+    for (let i = 1; i < operators.length; i++) {
+      const cmp = operators[i - 1].name.localeCompare(operators[i].name, 'ru');
+      expect(cmp).toBeLessThanOrEqual(0);
+    }
+  });
+
+  it('looks up an operator by INN and returns undefined for unknown INNs', () => {
+    const sample = getOperators()[0];
+    expect(getOperatorByInn(sample.inn)).toEqual(sample);
+    expect(getOperatorByInn('0000000000')).toBeUndefined();
+  });
+
+  it('matches the operator/inn returned by a phone-number lookup', () => {
+    const number = numberForFirstBlock(mobileTable, '916');
+    const data = expectData(lookupPhoneNumber(number));
+    expect(getOperatorByInn(data.inn)).toEqual({ name: data.operator, inn: data.inn });
   });
 });

@@ -18,6 +18,7 @@ import { QUIRKS, applyOrganizationNameQuirks, applyAllocationFieldQuirks } from 
 import { loadUserQuirks } from './compile/loadQuirks.js';
 import { fetchSubjectTimezones } from './osm/fetchSubjectTimezones.js';
 import type { NormalizedRow, SourceFile } from './parse/types.js';
+import { DATASET_VERSION } from '../types.js';
 
 export interface BuildOptions {
   /** Download missing raw CSVs from opendata.digital.gov.ru before parsing. Default: true. */
@@ -157,9 +158,18 @@ export async function buildDataset(
     path.join(outputDir, 'regions.json'),
     FEDERAL_SUBJECTS.map((s) => ({ slug: s.slug, name: s.name, nameLatin: s.nameLatin })),
   );
+  // One canonical name per INN across both tables - the public operators index
+  // (getOperators / getOperatorByInn). Sorted by INN for stable diffs between rebuilds.
+  writeJson(
+    path.join(outputDir, 'operators.json'),
+    Object.fromEntries([...canonicalNames.entries()].sort(([a], [b]) => a.localeCompare(b))),
+  );
   writeJson(path.join(outputDir, 'timezones.json'), timezoneResult.timezones);
+  const dataFiles = ['fixed.json', 'mobile.json', 'regions.json', 'operators.json', 'timezones.json'] as const;
   writeJson(path.join(outputDir, 'meta.json'), {
+    version: DATASET_VERSION,
     builtAt: new Date().toISOString(),
+    files: dataFiles.map((file) => fileMeta(path.join(outputDir, file), file)),
     sourceFiles: RAW_DATA_FILES.map((file) => fileMeta(path.join(inputDir, file), file)),
     rowCounts: {
       ...Object.fromEntries(FIXED_FILES.map(({ sourceFile }, i) => [sourceFile, fixedParsed[i].rows.length])),
@@ -205,28 +215,34 @@ function collectUnmapped(rowSets: NormalizedRow[][]): string[] {
   return [...unmapped].sort((a, b) => a.localeCompare(b, 'ru'));
 }
 
-/** Merges several compiled code tables (e.g. ABC-3xx/4xx/8xx) into one, offsetting string-table indices. Codes are expected not to overlap between tables (each ABC/DEF file covers a disjoint set of 3-digit codes). */
+/** Merges several compiled code tables (e.g. ABC-3xx/4xx/8xx) into one, remapping string-table indices. Operator INNs are deduped across tables; region-sets and settlements are concatenated with offsets. Codes are expected not to overlap between tables (each ABC/DEF file covers a disjoint set of 3-digit codes). */
 function mergeCodeTables(tables: CompiledCodeTable[]): CompiledCodeTable {
   const merged: CompiledCodeTable = { o: [], r: [], p: [], c: {} };
+  const operatorIndex = new Map<string, number>();
+
+  function remapOperator(inn: string): number {
+    let idx = operatorIndex.get(inn);
+    if (idx === undefined) {
+      idx = merged.o.length;
+      merged.o.push(inn);
+      operatorIndex.set(inn, idx);
+    }
+    return idx;
+  }
+
   for (const table of tables) {
-    const operatorOffset = merged.o.length;
+    const operatorRemap = table.o.map(remapOperator);
     const regionSetOffset = merged.r.length;
     const settlementOffset = merged.p.length;
-    merged.o.push(...table.o);
     merged.r.push(...table.r);
     merged.p.push(...table.p);
     for (const [code, blocks] of Object.entries(table.c)) {
       merged.c[code] = blocks.map((block): CompiledBlock => {
+        const o = operatorRemap[block[2]];
         if (block.length === 5) {
-          return [
-            block[0],
-            block[1],
-            block[2] + operatorOffset,
-            block[3] + regionSetOffset,
-            block[4] + settlementOffset,
-          ];
+          return [block[0], block[1], o, block[3] + regionSetOffset, block[4] + settlementOffset];
         }
-        return [block[0], block[1], block[2] + operatorOffset, block[3] + regionSetOffset];
+        return [block[0], block[1], o, block[3] + regionSetOffset];
       });
     }
   }

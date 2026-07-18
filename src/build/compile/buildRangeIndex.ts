@@ -66,20 +66,19 @@ function toCompiledBlock(item: WorkingAllocation): CompiledBlock {
  * allocation in registry order (see findParallelAllocationConflicts).
  */
 export function buildRangeIndex(entries: FlatEntry[]): CompiledCodeTable {
-  const operators: [string, string][] = [];
+  const operators: string[] = [];
   const operatorIndex = new Map<string, number>();
   const regionSets: string[][] = [];
   const regionSetIndex = new Map<string, number>();
   const settlements: string[] = [];
   const settlementIndex = new Map<string, number>();
 
-  function operatorIdx(name: string, inn: string): number {
-    const key = `${name} ${inn}`;
-    let idx = operatorIndex.get(key);
+  function operatorIdx(inn: string): number {
+    let idx = operatorIndex.get(inn);
     if (idx === undefined) {
       idx = operators.length;
-      operators.push([name, inn]);
-      operatorIndex.set(key, idx);
+      operators.push(inn);
+      operatorIndex.set(inn, idx);
     }
     return idx;
   }
@@ -122,7 +121,7 @@ export function buildRangeIndex(entries: FlatEntry[]): CompiledCodeTable {
 
     const byRange = new Map<string, WorkingAllocation>();
     for (const entry of list) {
-      const o = operatorIdx(entry.operator, entry.inn);
+      const o = operatorIdx(entry.inn);
       const r = regionSetIdx(entry.regions);
       const p = entry.settlement ? settlementIdx(entry.settlement) : undefined;
       const key = `${entry.from}-${entry.to}`;

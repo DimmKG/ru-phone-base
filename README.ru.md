@@ -107,6 +107,20 @@ getRegions().find((r) => r.slug === 'sakha');
 // { slug: 'sakha', name: 'Республика Саха (Якутия)', nameLatin: 'Republic of Sakha (Yakutia)', timezone: 'Asia/Yakutsk' }
 ```
 
+### `getOperators(): OperatorInfo[]` / `getOperatorByInn(inn: string): OperatorInfo | undefined`
+
+Возвращает список всех операторов (юридических лиц) в базе — по одной записи на ИНН — или ищет одного оператора по ИНН.
+
+```ts
+import { getOperators, getOperatorByInn } from 'ru-phone-base';
+
+getOperators().find((o) => /МТС/i.test(o.name));
+// { name: 'ПАО "Мобильные ТелеСистемы"', inn: '7740000076' }
+
+getOperatorByInn('7740000076');
+// { name: 'ПАО "Мобильные ТелеСистемы"', inn: '7740000076' }
+```
+
 ### Своё расположение базы данных
 
 ```ts
@@ -116,11 +130,11 @@ const custom = createRuPhoneBase({ dataDir: '/path/to/regenerated/dataset' });
 custom.lookupPhoneNumber('+74951234567');
 ```
 
-Укажите путь к результату работы CLI `ru-phone-base-build` (см. ниже), чтобы использовать свежепересобранную базу без переустановки пакета.
+Укажите путь к результату работы CLI `ru-phone-base-build` (см. ниже), чтобы использовать свежепересобранную базу без переустановки пакета. Поле `meta.version` должно совпадать с `DATASET_VERSION` библиотеки, а `loadDataset` сверяет SHA-256 из `meta.files` с файлами на диске — при отсутствии или несовпадении версии выбрасывается `DatasetVersionError`, при битом хеше — `DatasetIntegrityError`.
 
 ### Опциональные таблицы поиска (`fixed` / `mobile`)
 
-В собранной базе две таблицы поиска — фиксированная связь (`fixed.json`, ~12 МБ) и мобильная (`mobile.json`, ~450 КБ). По умолчанию загружаются обе; параметр `include` позволяет загрузить только нужные. Вспомогательные файлы `regions.json`, `timezones.json` и `meta.json` небольшие и всегда обязательны.
+В собранной базе две таблицы поиска — фиксированная связь (`fixed.json`, ~12 МБ) и мобильная (`mobile.json`, ~450 КБ). По умолчанию загружаются обе; параметр `include` позволяет загрузить только нужные. Вспомогательные файлы `regions.json`, `operators.json`, `timezones.json` и `meta.json` небольшие и всегда обязательны.
 
 ```ts
 import { createRuPhoneBase } from 'ru-phone-base';
@@ -137,13 +151,14 @@ mobileOnly.lookupPhoneNumber('+74951234567'); // { valid: false, reason: 'unassi
 import { createRuPhoneBaseFromData } from 'ru-phone-base';
 
 async function loadMobileOnly(baseUrl: string) {
-  const [mobile, regions, timezones, meta] = await Promise.all([
+  const [mobile, regions, operators, timezones, meta] = await Promise.all([
     fetch(`${baseUrl}/mobile.json`).then((r) => r.json()),
     fetch(`${baseUrl}/regions.json`).then((r) => r.json()),
+    fetch(`${baseUrl}/operators.json`).then((r) => r.json()),
     fetch(`${baseUrl}/timezones.json`).then((r) => r.json()),
     fetch(`${baseUrl}/meta.json`).then((r) => r.json()),
   ]);
-  return createRuPhoneBaseFromData({ mobile, regions, timezones, meta });
+  return createRuPhoneBaseFromData({ mobile, regions, operators, timezones, meta });
 }
 ```
 
@@ -174,7 +189,7 @@ const result = await fetch(`/api/phone-lookup?number=${encodeURIComponent(input)
 import { createRuPhoneBaseFromData } from 'ru-phone-base';
 
 async function loadRuPhoneBase(baseUrl: string) {
-  const names = ['fixed', 'mobile', 'regions', 'timezones', 'meta'] as const;
+  const names = ['fixed', 'mobile', 'regions', 'operators', 'timezones', 'meta'] as const;
   const files = await Promise.all(names.map((n) => fetch(`${baseUrl}/${n}.json`).then((r) => r.json())));
   return createRuPhoneBaseFromData(Object.fromEntries(names.map((n, i) => [n, files[i]])) as never);
 }
@@ -183,7 +198,7 @@ const lib = await loadRuPhoneBase('https://your-cdn.example.com/ru-phone-base-da
 lib.lookupPhoneNumber('+74951234567');
 ```
 
-`baseUrl` — это место, куда вы сами разместите пять JSON-файлов из `node_modules/ru-phone-base/dist/data/`: собственные статические файлы/CDN, либо напрямую с npm через jsDelivr/unpkg. Загружать все файлы не обязательно — см. раздел [Опциональные таблицы поиска](#опциональные-таблицы-поиска-fixed--mobile) выше, если нужны только мобильные или только городские номера.
+`baseUrl` — это место, куда вы сами разместите шесть JSON-файлов из `node_modules/ru-phone-base/dist/data/`: собственные статические файлы/CDN, либо напрямую с npm через jsDelivr/unpkg. Загружать все файлы не обязательно — см. раздел [Опциональные таблицы поиска](#опциональные-таблицы-поиска-fixed--mobile) выше, если нужны только мобильные или только городские номера.
 
 ## Пересборка базы данных
 

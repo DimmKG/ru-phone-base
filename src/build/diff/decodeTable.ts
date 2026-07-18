@@ -1,4 +1,4 @@
-import type { CompiledCodeTable, Dataset, NumberType } from '../../types.js';
+import type { CompiledCodeTable, Dataset, NumberType, OperatorsIndex } from '../../types.js';
 import { decodeBlock, timezoneFor } from '../../lookup.js';
 
 export interface DecodedAllocation {
@@ -21,11 +21,12 @@ export function decodeTable(
   table: CompiledCodeTable,
   type: NumberType,
   timezones: Dataset['timezones'],
+  operators: OperatorsIndex,
 ): DecodedAllocation[] {
   const result: DecodedAllocation[] = [];
   for (const [code, blocks] of Object.entries(table.c)) {
     for (const block of blocks) {
-      const decoded = decodeBlock(table, block, code);
+      const decoded = decodeBlock(table, block, code, operators);
       const timezone = decoded.nationwide
         ? undefined
         : firstTimezone(decoded.regionSlugs, decoded.settlement, timezones);

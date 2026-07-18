@@ -43,6 +43,11 @@ function writeSnapshot(
   writeJson(path.join(dataDir, 'fixed.json'), buildRangeIndex(fixedEntries));
   writeJson(path.join(dataDir, 'mobile.json'), EMPTY_TABLE);
   writeJson(path.join(dataDir, 'timezones.json'), timezones);
+  const operators: Record<string, string> = {};
+  for (const e of fixedEntries) {
+    if (!operators[e.inn]) operators[e.inn] = e.operator;
+  }
+  writeJson(path.join(dataDir, 'operators.json'), operators);
   writeJson(path.join(dataDir, 'meta.json'), {
     builtAt,
     sourceFiles: Object.entries(sourceFileShas).map(([file, sha256]) => ({ file, sha256 })),

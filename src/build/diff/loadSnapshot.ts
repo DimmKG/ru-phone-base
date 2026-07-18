@@ -44,8 +44,12 @@ export function loadSnapshot(dataDir: string, reportsDir?: string): DatasetSnaps
   const fixed = readJson<CompiledCodeTable>(path.join(dataDir, 'fixed.json'));
   const mobile = readJson<CompiledCodeTable>(path.join(dataDir, 'mobile.json'));
   const timezones = readJson<Dataset['timezones']>(path.join(dataDir, 'timezones.json'));
+  const operators = readJson<Dataset['operators']>(path.join(dataDir, 'operators.json'));
   const meta = readJson<SnapshotMeta>(path.join(dataDir, 'meta.json'));
-  const allocations = [...decodeTable(fixed, 'fixed', timezones), ...decodeTable(mobile, 'mobile', timezones)];
+  const allocations = [
+    ...decodeTable(fixed, 'fixed', timezones, operators),
+    ...decodeTable(mobile, 'mobile', timezones, operators),
+  ];
   const discrepancies =
     reportsDir && existsSync(path.join(reportsDir, 'discrepancies.json'))
       ? readJson<{ kind: string; [k: string]: unknown }[]>(path.join(reportsDir, 'discrepancies.json'))

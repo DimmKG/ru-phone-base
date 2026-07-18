@@ -1,16 +1,26 @@
 import { loadDataset } from './dataLoader.js';
-import { lookupPhoneNumber as lookupInDataset, listRegions } from './lookup.js';
+import { lookupPhoneNumber as lookupInDataset, listRegions, listOperators, findOperatorByInn } from './lookup.js';
 import { normalizePhoneNumber } from './phone.js';
-import type { Dataset, LookupResult, RegionInfo, TableName } from './types.js';
+import {
+  assertDatasetVersion,
+  type Dataset,
+  type LookupResult,
+  type OperatorInfo,
+  type RegionInfo,
+  type TableName,
+} from './types.js';
 
 export type {
   Dataset,
+  DatasetMeta,
   LookupResult,
   LookupSuccess,
   LookupFailure,
   PhoneNumberInfo,
   NumberType,
   RegionInfo,
+  OperatorInfo,
+  OperatorsIndex,
   CompiledCodeTable,
   Block,
   TimezoneEntry,
@@ -18,22 +28,44 @@ export type {
   FederalSubject,
   TableName,
 } from './types.js';
+export {
+  DATASET_VERSION,
+  DATASET_DATA_FILES,
+  DatasetVersionError,
+  DatasetIntegrityError,
+  assertDatasetVersion,
+} from './types.js';
 export { normalizePhoneNumber } from './phone.js';
 export type { LoadDatasetOptions } from './dataLoader.js';
+export { assertDatasetFileHashes, sha256Hex } from './dataLoader.js';
 
 export interface RuPhoneBase {
   lookupPhoneNumber(input: string): LookupResult;
   normalizePhoneNumber(input: string): string | null;
   /** Every federal subject known to the dataset (plus the non-geographic "all-russia" pseudo-entry), each with its resolved timezone. */
   getRegions(): RegionInfo[];
+  /** Every operator (legal entity) in the dataset, one entry per INN, sorted by name. */
+  getOperators(): OperatorInfo[];
+  /** Looks up a single operator by INN. Returns undefined when the INN is not in the dataset. */
+  getOperatorByInn(inn: string): OperatorInfo | undefined;
 }
 
-/** Builds a lookup instance from an already-loaded dataset - the browser/bundler-friendly path: import the JSON under `data/` yourself and pass it here, no `fs` access involved. Omit `fixed`/`mobile` on the dataset to exclude that table entirely (e.g. don't import `fixed.json` at all to keep it out of a browser bundle). */
+/**
+ * Builds a lookup instance from an already-loaded dataset - the browser/bundler-friendly
+ * path: import the JSON under `data/` yourself and pass it here, no `fs` access involved.
+ * Omit `fixed`/`mobile` on the dataset to exclude that table entirely (e.g. don't import
+ * `fixed.json` at all to keep it out of a browser bundle).
+ *
+ * Throws `DatasetVersionError` if `meta.version` is missing or does not match `DATASET_VERSION`.
+ */
 export function createRuPhoneBaseFromData(dataset: Dataset): RuPhoneBase {
+  assertDatasetVersion(dataset.meta);
   return {
     lookupPhoneNumber: (input: string) => lookupInDataset(dataset, input),
     normalizePhoneNumber,
     getRegions: () => listRegions(dataset),
+    getOperators: () => listOperators(dataset),
+    getOperatorByInn: (inn: string) => findOperatorByInn(dataset, inn),
   };
 }
 
@@ -59,3 +91,7 @@ const defaultInstance = createRuPhoneBase();
 export const lookupPhoneNumber = defaultInstance.lookupPhoneNumber;
 /** Every federal subject known to the bundled default dataset, each with its resolved timezone. */
 export const getRegions = defaultInstance.getRegions;
+/** Every operator (legal entity) in the bundled default dataset, one entry per INN. */
+export const getOperators = defaultInstance.getOperators;
+/** Looks up a single operator by INN in the bundled default dataset. */
+export const getOperatorByInn = defaultInstance.getOperatorByInn;

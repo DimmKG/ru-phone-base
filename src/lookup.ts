@@ -5,6 +5,8 @@ import type {
   FederalSubject,
   LookupResult,
   NumberType,
+  OperatorInfo,
+  OperatorsIndex,
   PhoneNumberInfo,
   RegionInfo,
 } from './types.js';
@@ -95,6 +97,22 @@ export function listRegions(dataset: Dataset): RegionInfo[] {
   });
 }
 
+/**
+ * Returns every operator (legal entity) in the dataset, one entry per INN.
+ * Sorted by name (Russian locale) for stable listing.
+ */
+export function listOperators(dataset: Dataset): OperatorInfo[] {
+  return Object.entries(dataset.operators)
+    .map(([inn, name]) => ({ name, inn }))
+    .sort((a, b) => a.name.localeCompare(b.name, 'ru') || a.inn.localeCompare(b.inn));
+}
+
+/** Looks up a single operator by INN. Returns undefined when the INN is not in the dataset. */
+export function findOperatorByInn(dataset: Dataset, inn: string): OperatorInfo | undefined {
+  const name = dataset.operators[inn];
+  return name !== undefined ? { name, inn } : undefined;
+}
+
 export interface DecodedBlockAllocation {
   operator: string;
   inn: string;
@@ -104,8 +122,18 @@ export interface DecodedBlockAllocation {
   nationwide: boolean;
 }
 
-/** Decodes a compiled block's index references (operator/region-set/settlement) into their actual values - the inverse of buildRangeIndex's interning. Shared with the build-time dataset-diff tooling, which needs the same decoding to compare allocations across dataset rebuilds. */
-export function decodeBlock(table: CompiledCodeTable, block: Block, code: string): DecodedBlockAllocation {
+/**
+ * Decodes a compiled block's index references (operator/region-set/settlement)
+ * into their actual values - the inverse of buildRangeIndex's interning.
+ * Operator display names come from the dataset-wide `operators` index (INN → name).
+ * Shared with the build-time dataset-diff tooling.
+ */
+export function decodeBlock(
+  table: CompiledCodeTable,
+  block: Block,
+  code: string,
+  operators: OperatorsIndex,
+): DecodedBlockAllocation {
   const o = block[2];
   const r = block[3];
   const p = block.length === 5 ? block[4] : undefined;
@@ -113,7 +141,8 @@ export function decodeBlock(table: CompiledCodeTable, block: Block, code: string
   const settlement = p !== undefined ? table.p[p] : undefined;
   const nationwide = isFederalCode(code) || slugs.includes(NATIONWIDE_SLUG);
   const regionSlugs = slugs.filter((slug) => slug !== NATIONWIDE_SLUG);
-  const [operator, inn] = table.o[o];
+  const inn = table.o[o];
+  const operator = operators[inn] ?? inn;
   return { operator, inn, regionSlugs, nationwide, ...(settlement !== undefined ? { settlement } : {}) };
 }
 
@@ -124,7 +153,7 @@ function resolveAllocation(
   code: string,
   regions: Map<string, FederalSubject>,
 ): Pick<PhoneNumberInfo, 'operator' | 'inn' | 'region' | 'settlement' | 'nationwide'> {
-  const decoded = decodeBlock(table, block, code);
+  const decoded = decodeBlock(table, block, code, dataset.operators);
   const region = decoded.regionSlugs.map((slug) => regionInfo(dataset, regions, slug, decoded.settlement));
   return {
     operator: decoded.operator,

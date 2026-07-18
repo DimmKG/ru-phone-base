@@ -107,6 +107,20 @@ getRegions().find((r) => r.slug === 'sakha');
 // { slug: 'sakha', name: 'Республика Саха (Якутия)', nameLatin: 'Republic of Sakha (Yakutia)', timezone: 'Asia/Yakutsk' }
 ```
 
+### `getOperators(): OperatorInfo[]` / `getOperatorByInn(inn: string): OperatorInfo | undefined`
+
+Lists every operator (legal entity) in the dataset — one entry per INN — or looks up a single operator by INN.
+
+```ts
+import { getOperators, getOperatorByInn } from 'ru-phone-base';
+
+getOperators().find((o) => /МТС/i.test(o.name));
+// { name: 'ПАО "Мобильные ТелеСистемы"', inn: '7740000076' }
+
+getOperatorByInn('7740000076');
+// { name: 'ПАО "Мобильные ТелеСистемы"', inn: '7740000076' }
+```
+
 ### Custom dataset location
 
 ```ts
@@ -116,11 +130,11 @@ const custom = createRuPhoneBase({ dataDir: '/path/to/regenerated/dataset' });
 custom.lookupPhoneNumber('+74951234567');
 ```
 
-Point this at the output of the `ru-phone-base-build` CLI (see below) to use a freshly regenerated dataset without reinstalling the package.
+Point this at the output of the `ru-phone-base-build` CLI (see below) to use a freshly regenerated dataset without reinstalling the package. The dataset's `meta.version` must match the library's `DATASET_VERSION`, and `loadDataset` verifies SHA-256 digests in `meta.files` against the on-disk JSON — a missing or mismatched version throws `DatasetVersionError`, a bad digest throws `DatasetIntegrityError`.
 
 ### Optional lookup tables (`fixed` / `mobile`)
 
-The compiled dataset has two lookup tables — fixed-line (`fixed.json`, ~12 MB) and mobile (`mobile.json`, ~450 KB). By default both are loaded; pass `include` to load only the tables you need. The supporting files `regions.json`, `timezones.json`, and `meta.json` are small and always required.
+The compiled dataset has two lookup tables — fixed-line (`fixed.json`, ~12 MB) and mobile (`mobile.json`, ~450 KB). By default both are loaded; pass `include` to load only the tables you need. The supporting files `regions.json`, `operators.json`, `timezones.json`, and `meta.json` are small and always required.
 
 ```ts
 import { createRuPhoneBase } from 'ru-phone-base';
@@ -137,13 +151,14 @@ In the browser, pass only the tables you fetched to `createRuPhoneBaseFromData` 
 import { createRuPhoneBaseFromData } from 'ru-phone-base';
 
 async function loadMobileOnly(baseUrl: string) {
-  const [mobile, regions, timezones, meta] = await Promise.all([
+  const [mobile, regions, operators, timezones, meta] = await Promise.all([
     fetch(`${baseUrl}/mobile.json`).then((r) => r.json()),
     fetch(`${baseUrl}/regions.json`).then((r) => r.json()),
+    fetch(`${baseUrl}/operators.json`).then((r) => r.json()),
     fetch(`${baseUrl}/timezones.json`).then((r) => r.json()),
     fetch(`${baseUrl}/meta.json`).then((r) => r.json()),
   ]);
-  return createRuPhoneBaseFromData({ mobile, regions, timezones, meta });
+  return createRuPhoneBaseFromData({ mobile, regions, operators, timezones, meta });
 }
 ```
 
@@ -174,7 +189,7 @@ const result = await fetch(`/api/phone-lookup?number=${encodeURIComponent(input)
 import { createRuPhoneBaseFromData } from 'ru-phone-base';
 
 async function loadRuPhoneBase(baseUrl: string) {
-  const names = ['fixed', 'mobile', 'regions', 'timezones', 'meta'] as const;
+  const names = ['fixed', 'mobile', 'regions', 'operators', 'timezones', 'meta'] as const;
   const files = await Promise.all(names.map((n) => fetch(`${baseUrl}/${n}.json`).then((r) => r.json())));
   return createRuPhoneBaseFromData(Object.fromEntries(names.map((n, i) => [n, files[i]])) as never);
 }
@@ -183,7 +198,7 @@ const lib = await loadRuPhoneBase('https://your-cdn.example.com/ru-phone-base-da
 lib.lookupPhoneNumber('+74951234567');
 ```
 
-`baseUrl` is wherever you choose to host the five JSON files from `node_modules/ru-phone-base/dist/data/` — your own static assets/CDN, or served straight off npm via jsDelivr/unpkg. You don't have to fetch all of them: see [Optional lookup tables](#optional-lookup-tables-fixed--mobile) above if you only need mobile or fixed-line lookups.
+`baseUrl` is wherever you choose to host the six JSON files from `node_modules/ru-phone-base/dist/data/` — your own static assets/CDN, or served straight off npm via jsDelivr/unpkg. You don't have to fetch all of them: see [Optional lookup tables](#optional-lookup-tables-fixed--mobile) above if you only need mobile or fixed-line lookups.
 
 ## Regenerating the dataset
 

@@ -29,26 +29,36 @@ describe('buildRangeIndex', () => {
 
   it('does not merge adjacent ranges with different operators', () => {
     const table = buildRangeIndex([
-      entry({ from: 100, to: 199, operator: 'Operator A' }),
-      entry({ from: 200, to: 299, operator: 'Operator B' }),
+      entry({ from: 100, to: 199, operator: 'Operator A', inn: '1111111111' }),
+      entry({ from: 200, to: 299, operator: 'Operator B', inn: '2222222222' }),
     ]);
     expect(table.c['495']).toHaveLength(2);
   });
 
   it('keeps the first allocation when the exact same range has competing entries', () => {
     const table = buildRangeIndex([
-      entry({ from: 100, to: 199, operator: 'Operator A', regions: ['altai-krai'] }),
-      entry({ from: 100, to: 199, operator: 'Operator B', regions: ['irkutsk-oblast'] }),
+      entry({ from: 100, to: 199, operator: 'Operator A', inn: '1111111111', regions: ['altai-krai'] }),
+      entry({ from: 100, to: 199, operator: 'Operator B', inn: '2222222222', regions: ['irkutsk-oblast'] }),
     ]);
     expect(table.c['495']).toEqual([[100, 199, 0, 0]]);
-    expect(table.o[0][0]).toBe('Operator A');
+    expect(table.o[0]).toBe('1111111111');
     expect(table.r[0]).toEqual(['altai-krai']);
   });
 
   it('deduplicates operator and region-set string tables', () => {
     const table = buildRangeIndex([entry({ from: 100, to: 199 }), entry({ from: 300, to: 399 })]);
-    expect(table.o).toHaveLength(1);
+    expect(table.o).toEqual(['1234567890']);
     expect(table.r).toHaveLength(1);
+  });
+
+  it('interns operators by INN only (name is resolved via operators.json at lookup time)', () => {
+    const table = buildRangeIndex([
+      entry({ from: 100, to: 199, operator: 'Name A', inn: '1111111111' }),
+      entry({ from: 300, to: 399, operator: 'Name B', inn: '1111111111' }),
+    ]);
+    expect(table.o).toEqual(['1111111111']);
+    expect(table.c['495'][0][2]).toBe(0);
+    expect(table.c['495'][1][2]).toBe(0);
   });
 
   it('carries settlement through when present, omitting it from the tuple when absent', () => {

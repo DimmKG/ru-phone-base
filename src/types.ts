@@ -5,8 +5,8 @@ export type Block =
 
 /** On-disk/compiled table shape - single-letter keys, array-of-tuples throughout, to minimize the published JSON size. */
 export interface CompiledCodeTable {
-  /** operators, as [name, inn] tuples */
-  o: [string, string][];
+  /** Interned operator INNs - block operatorIdx points here; resolve the display name via `Dataset.operators[inn]`. */
+  o: string[];
   /** deduped region-slug sets */
   r: string[][];
   /** deduped settlement names */
@@ -28,6 +28,15 @@ export interface FederalSubject {
   nameLatin: string;
 }
 
+/** Canonical operator name keyed by INN - the on-disk `operators.json` shape. */
+export type OperatorsIndex = Record<string, string>;
+
+/** An operator (legal entity) as returned by `getOperators()` / `getOperatorByInn()`. */
+export interface OperatorInfo {
+  name: string;
+  inn: string;
+}
+
 /** The two optional lookup tables - pick which ones to load/include; see `LoadDatasetOptions`/`RuPhoneBaseOptions`. */
 export type TableName = 'fixed' | 'mobile';
 
@@ -37,8 +46,98 @@ export interface Dataset {
   /** DEF-9xx (mobile). Omit to exclude mobile lookups. */
   mobile?: CompiledCodeTable;
   regions: FederalSubject[];
+  /** Canonical operator names keyed by INN (one entry per legal entity across fixed + mobile). */
+  operators: OperatorsIndex;
   timezones: Record<string, TimezoneEntry>;
-  meta: Record<string, unknown>;
+  meta: DatasetMeta;
+}
+
+/**
+ * On-disk format version written into `meta.json`. Bump when the compiled
+ * JSON shape changes in a way that older library builds cannot read (or vice
+ * versa). Checked by `loadDataset` / `createRuPhoneBaseFromData`.
+ */
+export const DATASET_VERSION = 1;
+
+export interface DatasetMeta {
+  /** Must equal `DATASET_VERSION` of the library loading this dataset. */
+  version: number;
+  /**
+   * SHA-256 digests of the compiled data files (everything except `meta.json`
+   * itself). Verified by `loadDataset` against on-disk bytes.
+   */
+  files: { file: string; sha256: string }[];
+  builtAt?: string;
+  sourceFiles?: { file: string; sha256: string }[];
+  rowCounts?: Record<string, number>;
+  timezones?: {
+    matchedFromOsm?: number;
+    filledFromFallback?: number;
+    unresolved?: string[];
+  };
+  [key: string]: unknown;
+}
+
+/** Compiled data files whose SHA-256 is recorded in `meta.files` (meta.json is excluded). */
+export const DATASET_DATA_FILES = [
+  'fixed.json',
+  'mobile.json',
+  'regions.json',
+  'operators.json',
+  'timezones.json',
+] as const;
+
+export type DatasetDataFile = (typeof DATASET_DATA_FILES)[number];
+
+export class DatasetVersionError extends Error {
+  readonly expected: number;
+  readonly actual: number | undefined;
+
+  constructor(actual: number | undefined) {
+    const detail =
+      actual === undefined
+        ? 'dataset meta.version is missing (rebuild with a current ru-phone-base-build, or upgrade the library)'
+        : `dataset meta.version is ${actual}, but this library expects ${DATASET_VERSION}`;
+    super(detail);
+    this.name = 'DatasetVersionError';
+    this.expected = DATASET_VERSION;
+    this.actual = actual;
+  }
+}
+
+export class DatasetIntegrityError extends Error {
+  readonly file?: string;
+  readonly expected?: string;
+  readonly actual?: string;
+
+  constructor(
+    kind: 'missing-manifest' | 'missing-hash' | 'mismatch',
+    file?: string,
+    expected?: string,
+    actual?: string,
+  ) {
+    let detail: string;
+    if (kind === 'missing-manifest') {
+      detail = 'dataset meta.files is missing or empty (rebuild with a current ru-phone-base-build)';
+    } else if (kind === 'missing-hash') {
+      detail = `dataset meta.files has no sha256 for ${file}`;
+    } else {
+      detail = `dataset file ${file} sha256 mismatch (expected ${expected}, got ${actual})`;
+    }
+    super(detail);
+    this.name = 'DatasetIntegrityError';
+    this.file = file;
+    this.expected = expected;
+    this.actual = actual;
+  }
+}
+
+/** Throws `DatasetVersionError` when `meta.version` is missing or does not match `DATASET_VERSION`. */
+export function assertDatasetVersion(meta: { version?: unknown } | null | undefined): asserts meta is DatasetMeta {
+  const actual = meta && typeof meta === 'object' ? meta.version : undefined;
+  if (typeof actual !== 'number' || actual !== DATASET_VERSION) {
+    throw new DatasetVersionError(typeof actual === 'number' ? actual : undefined);
+  }
 }
 
 export type NumberType = 'fixed' | 'mobile';
