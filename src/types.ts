@@ -135,22 +135,22 @@ export class DatasetIntegrityError extends Error {
 }
 
 /**
- * Thrown when the operators index does not cover INNs referenced by the loaded
- * fixed/mobile tables — typically because the wrong operators mini-base was
+ * Thrown when the operators index does not match the expected operators file(s)
+ * for the loaded tables — typically because the wrong operators mini-base was
  * paired with a table (e.g. `operators-mobile.json` with `fixed.json`).
  */
 export class DatasetOperatorsError extends Error {
-  readonly missingCount: number;
   readonly tables: TableName[];
+  readonly expectedFiles: string[];
 
-  constructor(missingCount: number, tables: TableName[]) {
+  constructor(tables: TableName[], expectedFiles: string[]) {
     super(
-      `operators index is missing ${missingCount} INN(s) required by the loaded ${tables.join('+')} table(s) ` +
+      `operators index does not match ${expectedFiles.join(' or ')} for the loaded ${tables.join('+')} table(s) ` +
         `(wrong operators mini-base?)`,
     );
     this.name = 'DatasetOperatorsError';
-    this.missingCount = missingCount;
     this.tables = tables;
+    this.expectedFiles = expectedFiles;
   }
 }
 
@@ -159,31 +159,6 @@ export function assertDatasetVersion(meta: { version?: unknown } | null | undefi
   const actual = meta && typeof meta === 'object' ? meta.version : undefined;
   if (typeof actual !== 'number' || actual !== DATASET_VERSION) {
     throw new DatasetVersionError(typeof actual === 'number' ? actual : undefined);
-  }
-}
-
-/**
- * Ensures every INN referenced by the loaded fixed/mobile tables exists in
- * `dataset.operators`. Catches a mismatched operators mini-index (e.g.
- * `operators-fixed.json` used with a mobile-only dataset).
- */
-export function assertOperatorsCoverTables(dataset: Dataset): void {
-  const missing = new Set<string>();
-  const tables: TableName[] = [];
-  if (dataset.fixed) {
-    tables.push('fixed');
-    for (const inn of dataset.fixed.o) {
-      if (dataset.operators[inn] === undefined) missing.add(inn);
-    }
-  }
-  if (dataset.mobile) {
-    tables.push('mobile');
-    for (const inn of dataset.mobile.o) {
-      if (dataset.operators[inn] === undefined) missing.add(inn);
-    }
-  }
-  if (missing.size > 0) {
-    throw new DatasetOperatorsError(missing.size, tables);
   }
 }
 

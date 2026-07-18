@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import {
   assertDatasetVersion,
   DatasetIntegrityError,
+  DatasetOperatorsError,
   type Dataset,
   type DatasetMeta,
   type OperatorsIndex,
@@ -61,6 +62,48 @@ export function operatorsFileForInclude(include: TableName[]): string {
   if (wantFixed) return 'operators-fixed.json';
   if (wantMobile) return 'operators-mobile.json';
   return 'operators.json';
+}
+
+/**
+ * Operators files whose digest is acceptable for the loaded tables.
+ * Partial loads may use either the matching mini-index or the full `operators.json`.
+ */
+export function operatorsFilesForTables(dataset: Pick<Dataset, 'fixed' | 'mobile'>): string[] {
+  const hasFixed = dataset.fixed !== undefined;
+  const hasMobile = dataset.mobile !== undefined;
+  if (hasFixed && hasMobile) return ['operators.json'];
+  if (hasFixed) return ['operators-fixed.json', 'operators.json'];
+  if (hasMobile) return ['operators-mobile.json', 'operators.json'];
+  return [];
+}
+
+/**
+ * Ensures `dataset.operators` matches the SHA-256 of an allowed operators file
+ * from `meta.files` (mini-index for the loaded tables, or the full index).
+ * Cheaper than scanning every INN; catches a mismatched operators mini-base.
+ */
+export function assertOperatorsCoverTables(dataset: Dataset): void {
+  const expectedFiles = operatorsFilesForTables(dataset);
+  if (expectedFiles.length === 0) return;
+
+  const tables: TableName[] = [
+    ...(dataset.fixed ? (['fixed'] as const) : []),
+    ...(dataset.mobile ? (['mobile'] as const) : []),
+  ];
+  const byName = new Map(dataset.meta.files.map((f) => [f.file, f.sha256]));
+  const allowedHashes = new Set<string>();
+  for (const file of expectedFiles) {
+    const hash = byName.get(file);
+    if (typeof hash === 'string' && hash.length > 0) allowedHashes.add(hash);
+  }
+  if (allowedHashes.size === 0) {
+    throw new DatasetOperatorsError(tables, expectedFiles);
+  }
+
+  const actual = sha256Hex(JSON.stringify(dataset.operators));
+  if (!allowedHashes.has(actual)) {
+    throw new DatasetOperatorsError(tables, expectedFiles);
+  }
 }
 
 /**
