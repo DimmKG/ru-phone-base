@@ -84,6 +84,8 @@ export const DATASET_DATA_FILES = [
   'mobile.json',
   'regions.json',
   'operators.json',
+  'operators-fixed.json',
+  'operators-mobile.json',
   'timezones.json',
 ] as const;
 
@@ -132,11 +134,62 @@ export class DatasetIntegrityError extends Error {
   }
 }
 
+/**
+ * Thrown when the operators index does not cover INNs referenced by the loaded
+ * fixed/mobile tables — typically because the wrong operators mini-base was
+ * paired with a table (e.g. `operators-mobile.json` with `fixed.json`).
+ */
+export class DatasetOperatorsError extends Error {
+  readonly missingInns: string[];
+  readonly tables: TableName[];
+
+  constructor(missingInns: string[], tables: TableName[]) {
+    const sample = missingInns.slice(0, 5).join(', ');
+    const more = missingInns.length > 5 ? ` (+${missingInns.length - 5} more)` : '';
+    const tableList = tables.join('+');
+    super(
+      `operators index is missing ${missingInns.length} INN(s) required by the loaded ${tableList} table(s) ` +
+        `(wrong operators mini-base?). First missing: ${sample}${more}`,
+    );
+    this.name = 'DatasetOperatorsError';
+    this.missingInns = missingInns;
+    this.tables = tables;
+  }
+}
+
 /** Throws `DatasetVersionError` when `meta.version` is missing or does not match `DATASET_VERSION`. */
 export function assertDatasetVersion(meta: { version?: unknown } | null | undefined): asserts meta is DatasetMeta {
   const actual = meta && typeof meta === 'object' ? meta.version : undefined;
   if (typeof actual !== 'number' || actual !== DATASET_VERSION) {
     throw new DatasetVersionError(typeof actual === 'number' ? actual : undefined);
+  }
+}
+
+/**
+ * Ensures every INN referenced by the loaded fixed/mobile tables exists in
+ * `dataset.operators`. Catches a mismatched operators mini-index (e.g.
+ * `operators-fixed.json` used with a mobile-only dataset).
+ */
+export function assertOperatorsCoverTables(dataset: Dataset): void {
+  const missing = new Set<string>();
+  const tables: TableName[] = [];
+  if (dataset.fixed) {
+    tables.push('fixed');
+    for (const inn of dataset.fixed.o) {
+      if (dataset.operators[inn] === undefined) missing.add(inn);
+    }
+  }
+  if (dataset.mobile) {
+    tables.push('mobile');
+    for (const inn of dataset.mobile.o) {
+      if (dataset.operators[inn] === undefined) missing.add(inn);
+    }
+  }
+  if (missing.size > 0) {
+    throw new DatasetOperatorsError(
+      [...missing].sort((a, b) => a.localeCompare(b)),
+      tables,
+    );
   }
 }
 

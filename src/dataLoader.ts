@@ -7,6 +7,7 @@ import {
   DatasetIntegrityError,
   type Dataset,
   type DatasetMeta,
+  type OperatorsIndex,
   type TableName,
 } from './types.js';
 
@@ -52,6 +53,16 @@ export function assertDatasetFileHashes(meta: DatasetMeta, files: { file: string
   }
 }
 
+/** Picks which operators index file to load for the requested tables. */
+export function operatorsFileForInclude(include: TableName[]): string {
+  const wantFixed = include.includes('fixed');
+  const wantMobile = include.includes('mobile');
+  if (wantFixed && wantMobile) return 'operators.json';
+  if (wantFixed) return 'operators-fixed.json';
+  if (wantMobile) return 'operators-mobile.json';
+  return 'operators.json';
+}
+
 /**
  * Loads the compiled dataset from a directory (fixed/mobile/regions/
  * operators/timezones/meta .json). Defaults to the dataset bundled with this
@@ -68,16 +79,17 @@ export function loadDataset(options: LoadDatasetOptions = {}): Dataset {
   const meta = JSON.parse(readFileSync(path.join(dataDir, 'meta.json'), 'utf-8')) as Dataset['meta'];
   assertDatasetVersion(meta);
 
+  const operatorsFile = operatorsFileForInclude(include);
   const names = [
     ...(include.includes('fixed') ? (['fixed.json'] as const) : []),
     ...(include.includes('mobile') ? (['mobile.json'] as const) : []),
     'regions.json',
-    'operators.json',
+    operatorsFile,
     'timezones.json',
   ] as const;
 
   const buffers = Object.fromEntries(names.map((name) => [name, readFileSync(path.join(dataDir, name))])) as Record<
-    (typeof names)[number],
+    string,
     Buffer
   >;
   assertDatasetFileHashes(
@@ -85,12 +97,12 @@ export function loadDataset(options: LoadDatasetOptions = {}): Dataset {
     names.map((file) => ({ file, content: buffers[file] })),
   );
 
-  const parse = <T>(name: (typeof names)[number]): T => JSON.parse(buffers[name].toString('utf-8')) as T;
+  const parse = <T>(name: string): T => JSON.parse(buffers[name].toString('utf-8')) as T;
   return {
     ...(include.includes('fixed') ? { fixed: parse('fixed.json') } : {}),
     ...(include.includes('mobile') ? { mobile: parse('mobile.json') } : {}),
     regions: parse('regions.json'),
-    operators: parse('operators.json'),
+    operators: parse<OperatorsIndex>(operatorsFile),
     timezones: parse('timezones.json'),
     meta,
   };

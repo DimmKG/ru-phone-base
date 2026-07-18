@@ -134,7 +134,17 @@ Point this at the output of the `ru-phone-base-build` CLI (see below) to use a f
 
 ### Optional lookup tables (`fixed` / `mobile`)
 
-The compiled dataset has two lookup tables — fixed-line (`fixed.json`, ~12 MB) and mobile (`mobile.json`, ~450 KB). By default both are loaded; pass `include` to load only the tables you need. The supporting files `regions.json`, `operators.json`, `timezones.json`, and `meta.json` are small and always required.
+The compiled dataset has two lookup tables — fixed-line (`fixed.json`, ~12 MB) and mobile (`mobile.json`, ~450 KB). By default both are loaded; pass `include` to load only the tables you need.
+
+Operators come as three INN→name indexes:
+
+| File                    | When loaded                                              |
+| ----------------------- | -------------------------------------------------------- |
+| `operators.json`        | Full load (both tables) — every operator in the registry |
+| `operators-mobile.json` | `include: ['mobile']` — only mobile operators            |
+| `operators-fixed.json`  | `include: ['fixed']` — only fixed-line operators         |
+
+The other supporting files (`regions.json`, `timezones.json`, `meta.json`) are small and always required.
 
 ```ts
 import { createRuPhoneBase } from 'ru-phone-base';
@@ -145,7 +155,7 @@ mobileOnly.lookupPhoneNumber('+79161234567'); // works
 mobileOnly.lookupPhoneNumber('+74951234567'); // { valid: false, reason: 'unassigned' }
 ```
 
-In the browser, pass only the tables you fetched to `createRuPhoneBaseFromData` — omit `fixed` entirely to keep the largest file out of your bundle:
+In the browser, pass only the tables you fetched to `createRuPhoneBaseFromData` — omit `fixed` entirely to keep the largest file out of your bundle, and fetch the matching operators mini-index (`createRuPhoneBaseFromData` throws `DatasetOperatorsError` if the wrong mini-index is paired with a table):
 
 ```ts
 import { createRuPhoneBaseFromData } from 'ru-phone-base';
@@ -154,7 +164,7 @@ async function loadMobileOnly(baseUrl: string) {
   const [mobile, regions, operators, timezones, meta] = await Promise.all([
     fetch(`${baseUrl}/mobile.json`).then((r) => r.json()),
     fetch(`${baseUrl}/regions.json`).then((r) => r.json()),
-    fetch(`${baseUrl}/operators.json`).then((r) => r.json()),
+    fetch(`${baseUrl}/operators-mobile.json`).then((r) => r.json()),
     fetch(`${baseUrl}/timezones.json`).then((r) => r.json()),
     fetch(`${baseUrl}/meta.json`).then((r) => r.json()),
   ]);
@@ -162,7 +172,7 @@ async function loadMobileOnly(baseUrl: string) {
 }
 ```
 
-The same pattern works in reverse with `include: ['fixed']` when only fixed-line lookups are needed.
+The same pattern works in reverse with `include: ['fixed']` / `operators-fixed.json` when only fixed-line lookups are needed.
 
 ### Browser usage
 
@@ -198,7 +208,7 @@ const lib = await loadRuPhoneBase('https://your-cdn.example.com/ru-phone-base-da
 lib.lookupPhoneNumber('+74951234567');
 ```
 
-`baseUrl` is wherever you choose to host the six JSON files from `node_modules/ru-phone-base/dist/data/` — your own static assets/CDN, or served straight off npm via jsDelivr/unpkg. You don't have to fetch all of them: see [Optional lookup tables](#optional-lookup-tables-fixed--mobile) above if you only need mobile or fixed-line lookups.
+`baseUrl` is wherever you choose to host the JSON files from `node_modules/ru-phone-base/dist/data/` — your own static assets/CDN, or served straight off npm via jsDelivr/unpkg. You don't have to fetch all of them: see [Optional lookup tables](#optional-lookup-tables-fixed--mobile) above if you only need mobile or fixed-line lookups.
 
 ## Regenerating the dataset
 

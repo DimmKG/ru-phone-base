@@ -52,7 +52,7 @@ describe('dataset version', () => {
 describe('dataset file hashes', () => {
   it('accepts the bundled dataset file digests', () => {
     const dataset = loadDataset();
-    expect(dataset.meta.files.length).toBeGreaterThanOrEqual(5);
+    expect(dataset.meta.files.length).toBeGreaterThanOrEqual(7);
     expect(dataset.meta.files.every((f) => /^[a-f0-9]{64}$/.test(f.sha256))).toBe(true);
   });
 
@@ -95,6 +95,8 @@ describe('dataset file hashes', () => {
         'mobile.json',
         'regions.json',
         'operators.json',
+        'operators-fixed.json',
+        'operators-mobile.json',
         'timezones.json',
       ]) {
         // copy via read/write - keep hashes valid first, then tamper regions

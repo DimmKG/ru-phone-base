@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { createRuPhoneBase, createRuPhoneBaseFromData } from '../../src/index.js';
+import {
+  createRuPhoneBase,
+  createRuPhoneBaseFromData,
+  DatasetOperatorsError,
+  assertOperatorsCoverTables,
+} from '../../src/index.js';
 import { loadDataset } from '../../src/dataLoader.js';
 
 describe('optional lookup tables', () => {
@@ -39,5 +44,40 @@ describe('optional lookup tables', () => {
 
     const instance = createRuPhoneBaseFromData(dataset);
     expect(instance.lookupPhoneNumber('+79161234567').valid).toBe(true);
+  });
+
+  it('mobile-only load uses the mobile operators mini-base', () => {
+    const fullDs = loadDataset();
+    const mobileOnlyDs = loadDataset({ include: ['mobile'] });
+    const fixedOnlyDs = loadDataset({ include: ['fixed'] });
+
+    expect(Object.keys(mobileOnlyDs.operators).length).toBeLessThan(Object.keys(fullDs.operators).length);
+    expect(Object.keys(fixedOnlyDs.operators).length).toBeLessThan(Object.keys(fullDs.operators).length);
+    expect(Object.keys(mobileOnlyDs.operators).length).toBeLessThan(100);
+    expect(Object.keys(fixedOnlyDs.operators).length).toBeGreaterThan(500);
+
+    for (const inn of mobileOnlyDs.mobile!.o) {
+      expect(mobileOnlyDs.operators[inn]).toBeDefined();
+    }
+    for (const inn of fixedOnlyDs.fixed!.o) {
+      expect(fixedOnlyDs.operators[inn]).toBeDefined();
+    }
+  });
+
+  it('throws when operators-mobile is paired with the fixed table', () => {
+    const mobile = loadDataset({ include: ['mobile'] });
+    const fixed = loadDataset({ include: ['fixed'] });
+    const mismatched = { ...fixed, operators: mobile.operators };
+
+    expect(() => assertOperatorsCoverTables(mismatched)).toThrow(DatasetOperatorsError);
+    expect(() => createRuPhoneBaseFromData(mismatched)).toThrow(/wrong operators mini-base/);
+  });
+
+  it('throws when operators-fixed is paired with the mobile table', () => {
+    const mobile = loadDataset({ include: ['mobile'] });
+    const fixed = loadDataset({ include: ['fixed'] });
+    const mismatched = { ...mobile, operators: fixed.operators };
+
+    expect(() => createRuPhoneBaseFromData(mismatched)).toThrow(DatasetOperatorsError);
   });
 });

@@ -158,14 +158,24 @@ export async function buildDataset(
     path.join(outputDir, 'regions.json'),
     FEDERAL_SUBJECTS.map((s) => ({ slug: s.slug, name: s.name, nameLatin: s.nameLatin })),
   );
-  // One canonical name per INN across both tables - the public operators index
-  // (getOperators / getOperatorByInn). Sorted by INN for stable diffs between rebuilds.
-  writeJson(
-    path.join(outputDir, 'operators.json'),
-    Object.fromEntries([...canonicalNames.entries()].sort(([a], [b]) => a.localeCompare(b))),
-  );
+  // Operator indexes (INN → canonical name): full registry plus per-table mini-bases
+  // for mobile-/fixed-only loads. Sorted by INN for stable diffs between rebuilds.
+  const operatorsAll = Object.fromEntries([...canonicalNames.entries()].sort(([a], [b]) => a.localeCompare(b)));
+  const operatorsFixed = operatorsIndexFromInns(fixed.o, canonicalNames);
+  const operatorsMobile = operatorsIndexFromInns(mobile.o, canonicalNames);
+  writeJson(path.join(outputDir, 'operators.json'), operatorsAll);
+  writeJson(path.join(outputDir, 'operators-fixed.json'), operatorsFixed);
+  writeJson(path.join(outputDir, 'operators-mobile.json'), operatorsMobile);
   writeJson(path.join(outputDir, 'timezones.json'), timezoneResult.timezones);
-  const dataFiles = ['fixed.json', 'mobile.json', 'regions.json', 'operators.json', 'timezones.json'] as const;
+  const dataFiles = [
+    'fixed.json',
+    'mobile.json',
+    'regions.json',
+    'operators.json',
+    'operators-fixed.json',
+    'operators-mobile.json',
+    'timezones.json',
+  ] as const;
   writeJson(path.join(outputDir, 'meta.json'), {
     version: DATASET_VERSION,
     builtAt: new Date().toISOString(),
@@ -213,6 +223,12 @@ function collectUnmapped(rowSets: NormalizedRow[][]): string[] {
     }
   }
   return [...unmapped].sort((a, b) => a.localeCompare(b, 'ru'));
+}
+
+/** Builds a sorted INN → canonical-name index covering only the INNs present in a compiled table. */
+function operatorsIndexFromInns(inns: string[], canonicalNames: Map<string, string>): Record<string, string> {
+  const unique = [...new Set(inns)].sort((a, b) => a.localeCompare(b));
+  return Object.fromEntries(unique.map((inn) => [inn, canonicalNames.get(inn) ?? inn]));
 }
 
 /** Merges several compiled code tables (e.g. ABC-3xx/4xx/8xx) into one, remapping string-table indices. Operator INNs are deduped across tables; region-sets and settlements are concatenated with offsets. Codes are expected not to overlap between tables (each ABC/DEF file covers a disjoint set of 3-digit codes). */

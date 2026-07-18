@@ -3,6 +3,7 @@ import { lookupPhoneNumber as lookupInDataset, listRegions, listOperators, findO
 import { normalizePhoneNumber } from './phone.js';
 import {
   assertDatasetVersion,
+  assertOperatorsCoverTables,
   type Dataset,
   type LookupResult,
   type OperatorInfo,
@@ -33,11 +34,13 @@ export {
   DATASET_DATA_FILES,
   DatasetVersionError,
   DatasetIntegrityError,
+  DatasetOperatorsError,
   assertDatasetVersion,
+  assertOperatorsCoverTables,
 } from './types.js';
 export { normalizePhoneNumber } from './phone.js';
 export type { LoadDatasetOptions } from './dataLoader.js';
-export { assertDatasetFileHashes, sha256Hex } from './dataLoader.js';
+export { assertDatasetFileHashes, sha256Hex, operatorsFileForInclude } from './dataLoader.js';
 
 export interface RuPhoneBase {
   lookupPhoneNumber(input: string): LookupResult;
@@ -57,9 +60,12 @@ export interface RuPhoneBase {
  * `fixed.json` at all to keep it out of a browser bundle).
  *
  * Throws `DatasetVersionError` if `meta.version` is missing or does not match `DATASET_VERSION`.
+ * Throws `DatasetOperatorsError` if `operators` does not cover INNs from the loaded tables
+ * (wrong operators mini-base paired with fixed/mobile).
  */
 export function createRuPhoneBaseFromData(dataset: Dataset): RuPhoneBase {
   assertDatasetVersion(dataset.meta);
+  assertOperatorsCoverTables(dataset);
   return {
     lookupPhoneNumber: (input: string) => lookupInDataset(dataset, input),
     normalizePhoneNumber,
