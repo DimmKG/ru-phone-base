@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/DimmKG/ru-phone-base/compare/v1.2.0...v1.2.1) (2026-07-18)
+
+
+### Bug Fixes
+
+* **data:** include operators mini bases ([8b53cc0](https://github.com/DimmKG/ru-phone-base/commit/8b53cc03e9f1042a8fc1b0fdbc53ef674b5324ea))
+
 # [1.2.0](https://github.com/DimmKG/ru-phone-base/compare/v1.1.1...v1.2.0) (2026-07-18)
 
 
