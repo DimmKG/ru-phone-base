@@ -1,0 +1,138 @@
+name: Update dataset
+
+on:
+  schedule:
+    - cron: '0 6 * * 1' # Monday 06:00 UTC
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Run the diff/PR steps even if the source CSVs are unchanged (for testing)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: update-dataset
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Snapshot the currently-committed dataset
+        run: |
+          mkdir -p /tmp/old-snapshot
+          cp -r src/data /tmp/old-snapshot/data
+          cp -r src/reports /tmp/old-snapshot/reports
+
+      # OSM Overpass responses are cached on disk with no TTL and rarely
+      # change - avoid re-hitting the (rate-limited, occasionally flaky)
+      # Overpass API for the same ~89 region queries on every weekly run.
+      # actions/cache entries are immutable per exact key, so a run-id-
+      # suffixed key + a bare-prefix restore-key is the standard "always
+      # save a fresh entry, seeded from the most recent previous one" idiom.
+      - name: Cache OSM Overpass responses
+        uses: actions/cache@v4
+        with:
+          path: /tmp/ru-phone-base-osm-cache
+          key: osm-cache-${{ github.run_id }}
+          restore-keys: |
+            osm-cache-
+
+      - name: Rebuild dataset from the latest registry CSVs
+        run: npm run build:data
+
+      - name: Check whether source CSVs changed
+        id: check
+        run: |
+          OLD_SHAS=$(jq -S '[.sourceFiles[].sha256]' /tmp/old-snapshot/data/meta.json)
+          NEW_SHAS=$(jq -S '[.sourceFiles[].sha256]' src/data/meta.json)
+          if [ "$OLD_SHAS" = "$NEW_SHAS" ] && [ "${{ github.event.inputs.force }}" != "true" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Verify the rebuilt dataset
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          npm run typecheck
+          npm run lint
+          npm test
+
+      - name: Compute diff/statistics
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          mkdir -p /tmp/diff-output
+          npx tsx src/bin/diff-dataset.ts --old /tmp/old-snapshot --output /tmp/diff-output
+
+      - name: Upload diff artifacts
+        if: steps.check.outputs.changed == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: dataset-diff-${{ github.run_id }}
+          path: /tmp/diff-output
+          retention-days: 90
+
+      - name: Determine snapshot date, branch name, and a one-line stats summary
+        if: steps.check.outputs.changed == 'true'
+        id: meta
+        run: |
+          DATE=$(jq -r '.snapshotDate' /tmp/diff-output/stats.json)
+          ADDED=$(jq -r '.allocations.total.added' /tmp/diff-output/stats.json)
+          REMOVED=$(jq -r '.allocations.total.removed' /tmp/diff-output/stats.json)
+          CHANGED=$(jq -r '.allocations.total.changedData' /tmp/diff-output/stats.json)
+          TZ_CHANGED=$(jq -r '.allocations.total.changedTimezone' /tmp/diff-output/stats.json)
+          # Goes into the commit body (see the next step).
+          SUMMARY="+$ADDED/-$REMOVED allocations, $CHANGED changed, $TZ_CHANGED timezone changes"
+          echo "date=$DATE" >> "$GITHUB_OUTPUT"
+          echo "branch=data-update-$DATE-${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+          echo "summary=$SUMMARY" >> "$GITHUB_OUTPUT"
+
+      - name: Commit updated dataset
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          git checkout -b "${{ steps.meta.outputs.branch }}"
+          git add src/data src/reports
+          git -c user.name="github-actions[bot]" \
+              -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              commit -m "fix(data): database update (${{ steps.meta.outputs.date }})" \
+              -m "${{ steps.meta.outputs.summary }}"
+          git push origin "${{ steps.meta.outputs.branch }}"
+
+      - name: Build PR body
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          npx tsx tools/build-pr-summary.ts \
+            --stats /tmp/diff-output/stats.json \
+            --run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            --output /tmp/diff-output/pr-body.md
+
+      - name: Open pull request
+        if: steps.check.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr create \
+            --base master \
+            --head "${{ steps.meta.outputs.branch }}" \
+            --title "fix(data): database update (${{ steps.meta.outputs.date }})" \
+            --body-file /tmp/diff-output/pr-body.md \
+            --label database-update

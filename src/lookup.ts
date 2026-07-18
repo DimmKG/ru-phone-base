@@ -45,8 +45,8 @@ function districtKeyFromSettlement(settlement: string): string {
   return settlement.replace(/^(м\.р-н|р-н|улус)\.?\s+/iu, '').trim();
 }
 
-function timezoneFor(dataset: Dataset, slug: string, settlement?: string): string | undefined {
-  const entry = dataset.timezones[slug];
+export function timezoneFor(timezones: Dataset['timezones'], slug: string, settlement?: string): string | undefined {
+  const entry = timezones[slug];
   if (!entry) return undefined; // non-geographic pseudo-subjects (e.g. "all-russia") deliberately have no timezone entry
   if (typeof entry === 'string') return entry;
   if (settlement) {
@@ -67,7 +67,7 @@ function regionInfo(
   settlement?: string,
 ): RegionInfo {
   const subject = regions.get(slug);
-  const timezone = timezoneFor(dataset, slug, settlement);
+  const timezone = timezoneFor(dataset.timezones, slug, settlement);
   return {
     slug,
     name: subject?.name ?? slug,
@@ -95,6 +95,28 @@ export function listRegions(dataset: Dataset): RegionInfo[] {
   });
 }
 
+export interface DecodedBlockAllocation {
+  operator: string;
+  inn: string;
+  /** Region slugs from this block's region-set, excluding NATIONWIDE_SLUG. Already sorted (see buildRangeIndex's regionSetIdx). */
+  regionSlugs: string[];
+  settlement?: string;
+  nationwide: boolean;
+}
+
+/** Decodes a compiled block's index references (operator/region-set/settlement) into their actual values - the inverse of buildRangeIndex's interning. Shared with the build-time dataset-diff tooling, which needs the same decoding to compare allocations across dataset rebuilds. */
+export function decodeBlock(table: CompiledCodeTable, block: Block, code: string): DecodedBlockAllocation {
+  const o = block[2];
+  const r = block[3];
+  const p = block.length === 5 ? block[4] : undefined;
+  const slugs = table.r[r];
+  const settlement = p !== undefined ? table.p[p] : undefined;
+  const nationwide = isFederalCode(code) || slugs.includes(NATIONWIDE_SLUG);
+  const regionSlugs = slugs.filter((slug) => slug !== NATIONWIDE_SLUG);
+  const [operator, inn] = table.o[o];
+  return { operator, inn, regionSlugs, nationwide, ...(settlement !== undefined ? { settlement } : {}) };
+}
+
 function resolveAllocation(
   dataset: Dataset,
   table: CompiledCodeTable,
@@ -102,22 +124,14 @@ function resolveAllocation(
   code: string,
   regions: Map<string, FederalSubject>,
 ): Pick<PhoneNumberInfo, 'operator' | 'inn' | 'region' | 'settlement' | 'nationwide'> {
-  const o = block[2];
-  const r = block[3];
-  const p = block.length === 5 ? block[4] : undefined;
-  const slugs = table.r[r];
-  const settlement = p !== undefined ? table.p[p] : undefined;
-  const nationwide = isFederalCode(code) || slugs.includes(NATIONWIDE_SLUG);
-  const region = slugs
-    .filter((slug) => slug !== NATIONWIDE_SLUG)
-    .map((slug) => regionInfo(dataset, regions, slug, settlement));
-  const [operator, inn] = table.o[o];
+  const decoded = decodeBlock(table, block, code);
+  const region = decoded.regionSlugs.map((slug) => regionInfo(dataset, regions, slug, decoded.settlement));
   return {
-    operator,
-    inn,
+    operator: decoded.operator,
+    inn: decoded.inn,
     region,
-    nationwide,
-    ...(settlement !== undefined ? { settlement } : {}),
+    nationwide: decoded.nationwide,
+    ...(decoded.settlement !== undefined ? { settlement: decoded.settlement } : {}),
   };
 }
 

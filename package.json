@@ -50,6 +50,7 @@
     "prepare": "husky",
     "build": "tsup",
     "build:data": "tsx src/bin/build-data.ts --input raw-data --output src/data",
+    "diff:data": "tsx src/bin/diff-dataset.ts",
     "dev": "tsup --watch",
     "test": "vitest run",
     "test:watch": "vitest",
