@@ -1,5 +1,5 @@
 name: '🐛 Bug Report'
-description: A problem with the library's code, types, or tooling — not a wrong region/operator for a specific phone number (see the Data Error template for that).
+description: A problem with the library's code, types, or tooling — not a data error (see the Data Error template for that).
 title: '[Bug]: '
 labels: [bug]
 body:
