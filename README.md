@@ -171,7 +171,7 @@ mobileOnly.lookupPhoneNumber('+74951234567'); // { valid: false, reason: 'unassi
 In the browser, pass only the tables you fetched to `createRuPhoneBaseFromData` — omit `fixed` entirely to keep the largest file out of your bundle, and fetch the matching operators mini-index (`createRuPhoneBaseFromData` throws `DatasetOperatorsError` if the wrong mini-index is paired with a table):
 
 ```ts
-import { createRuPhoneBaseFromData } from 'ru-phone-base';
+import { createRuPhoneBaseFromData } from 'ru-phone-base/browser';
 
 async function loadMobileOnly(baseUrl: string) {
   const [mobile, regions, operators, timezones, meta] = await Promise.all([
@@ -191,6 +191,8 @@ The same pattern works in reverse with `include: ['fixed']` / `operators-fixed.j
 
 `createRuPhoneBase` reads the dataset from disk (Node-only) and the dataset itself is large (`fixed.json` is several MB even minified) — **do not statically `import` the JSON files into a browser app**; a bundler would inline the whole dataset into your JS bundle and ship it to every visitor.
 
+In a bundler build, import from **`ru-phone-base/browser`**, not the package root — it's the same `createRuPhoneBaseFromData` API, but with zero `node:*` imports, so bundlers that error on unresolvable Node built-ins (e.g. webpack) build cleanly.
+
 **Recommended: look up numbers on your server, send only the result to the browser.** Most apps don't actually need the lookup to happen client-side:
 
 ```ts
@@ -209,7 +211,7 @@ const result = await fetch(`/api/phone-lookup?number=${encodeURIComponent(input)
 **If the app genuinely needs offline/client-side lookup** (e.g. a PWA), `fetch()` the compiled JSON at runtime instead of bundling it, and cache it (Service Worker, IndexedDB, `Cache` API) so it's only downloaded once:
 
 ```ts
-import { createRuPhoneBaseFromData } from 'ru-phone-base';
+import { createRuPhoneBaseFromData } from 'ru-phone-base/browser';
 
 async function loadRuPhoneBase(baseUrl: string) {
   const names = ['fixed', 'mobile', 'regions', 'operators', 'timezones', 'meta'] as const;

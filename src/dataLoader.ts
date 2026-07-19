@@ -1,7 +1,15 @@
-import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+// Namespace imports, not named (`import { readFileSync } from 'node:fs'`):
+// bundlers building for the browser (Vite/Rollup) externalize Node builtins
+// to a stub module, and a *named* import is statically bound against that
+// stub's exports at bundle time - even for code a later tree-shaking pass
+// would otherwise drop as unreachable - which hard-fails the build. A
+// namespace import only resolves `nodeFs.readFileSync` at the property-access
+// site, so it tree-shakes away cleanly once nothing in this module is
+// actually reachable from the app's imports (see `defaultDataDir` below).
+import * as nodeCrypto from 'node:crypto';
+import * as nodeFs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import * as nodeUrl from 'node:url';
 import {
   assertDatasetVersion,
   DatasetIntegrityError,
@@ -11,8 +19,17 @@ import {
   type TableName,
 } from './types.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DEFAULT_DATA_DIR = path.join(__dirname, 'data');
+// Computed lazily (inside a function, not at module top level) so it's only
+// ever evaluated - and only ever needs `node:url` to actually resolve - when
+// `loadDataset`/`createRuPhoneBase` are reachable from the app's imports. A
+// browser app that imports only `createRuPhoneBaseFromData` never reaches
+// this function, so a bundler's tree-shaking drops it (and the rest of this
+// file's `fs`-touching code) entirely instead of shipping dead Node-only
+// code - or a broken `node:*` import - to the browser.
+function defaultDataDir(): string {
+  const __dirname = path.dirname(nodeUrl.fileURLToPath(import.meta.url));
+  return path.join(__dirname, 'data');
+}
 
 const ALL_TABLES: TableName[] = ['fixed', 'mobile'];
 
@@ -29,7 +46,7 @@ export interface LoadDatasetOptions {
 }
 
 export function sha256Hex(content: Buffer | string): string {
-  return createHash('sha256').update(content).digest('hex');
+  return nodeCrypto.createHash('sha256').update(content).digest('hex');
 }
 
 /**
@@ -75,8 +92,8 @@ export function operatorsFileForInclude(include: TableName[]): string {
  * loaded data file's SHA-256 does not match `meta.files`.
  */
 export function loadDataset(options: LoadDatasetOptions = {}): Dataset {
-  const { dataDir = DEFAULT_DATA_DIR, include = ALL_TABLES } = options;
-  const meta = JSON.parse(readFileSync(path.join(dataDir, 'meta.json'), 'utf-8')) as Dataset['meta'];
+  const { dataDir = defaultDataDir(), include = ALL_TABLES } = options;
+  const meta = JSON.parse(nodeFs.readFileSync(path.join(dataDir, 'meta.json'), 'utf-8')) as Dataset['meta'];
   assertDatasetVersion(meta);
 
   const operatorsFile = operatorsFileForInclude(include);
@@ -88,10 +105,9 @@ export function loadDataset(options: LoadDatasetOptions = {}): Dataset {
     'timezones.json',
   ] as const;
 
-  const buffers = Object.fromEntries(names.map((name) => [name, readFileSync(path.join(dataDir, name))])) as Record<
-    string,
-    Buffer
-  >;
+  const buffers = Object.fromEntries(
+    names.map((name) => [name, nodeFs.readFileSync(path.join(dataDir, name))]),
+  ) as Record<string, Buffer>;
   assertDatasetFileHashes(
     meta,
     names.map((file) => ({ file, content: buffers[file] })),

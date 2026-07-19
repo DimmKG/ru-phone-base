@@ -1,0 +1,25 @@
+{
+  "name": "ru-phone-base-example-vite",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Bundler smoke test: Vite/Rollup build consuming ru-phone-base/browser, mobile-only, with hash verification.",
+  "scripts": {
+    "data": "node ../_shared/copy-mobile-data.mjs public/data",
+    "predev": "npm run data",
+    "dev": "vite",
+    "prebuild": "npm run data",
+    "build": "vite build",
+    "preview": "vite preview --port 4173 --strictPort",
+    "check": "node puppet-check.mjs",
+    "test": "npm run build && start-server-and-test preview http://localhost:4173 check"
+  },
+  "dependencies": {
+    "ru-phone-base": "file:../.."
+  },
+  "devDependencies": {
+    "vite": "^5.4.0",
+    "puppeteer-core": "^23.0.0",
+    "start-server-and-test": "^2.0.9"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "name": "ru-phone-base-example-webpack",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Bundler smoke test: webpack 5 build consuming ru-phone-base/browser, mobile-only, with hash verification.",
+  "scripts": {
+    "data": "node ../_shared/copy-mobile-data.mjs public/data",
+    "prebuild": "npm run data",
+    "build": "webpack build --mode production",
+    "serve": "http-server dist -p 4174 -s",
+    "check": "node puppet-check.mjs",
+    "test": "npm run build && start-server-and-test serve http://localhost:4174 check"
+  },
+  "dependencies": {
+    "ru-phone-base": "file:../.."
+  },
+  "devDependencies": {
+    "webpack": "^5.94.0",
+    "webpack-cli": "^5.1.4",
+    "copy-webpack-plugin": "^12.0.2",
+    "puppeteer-core": "^23.0.0",
+    "http-server": "^14.1.1",
+    "start-server-and-test": "^2.0.9"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "name": "ru-phone-base-example-esbuild",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Bundler smoke test: esbuild build consuming ru-phone-base/browser, mobile-only, with hash verification.",
+  "scripts": {
+    "data": "node ../_shared/copy-mobile-data.mjs public/data",
+    "prebuild": "npm run data",
+    "build": "node build.mjs",
+    "serve": "http-server dist -p 4175 -s",
+    "check": "node puppet-check.mjs",
+    "test": "npm run build && start-server-and-test serve http://localhost:4175 check"
+  },
+  "dependencies": {
+    "ru-phone-base": "file:../.."
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0",
+    "puppeteer-core": "^23.0.0",
+    "http-server": "^14.1.1",
+    "start-server-and-test": "^2.0.9"
+  }
+}

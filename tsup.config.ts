@@ -3,7 +3,7 @@ import { cpSync } from 'node:fs';
 
 export default defineConfig([
   {
-    entry: { index: 'src/index.ts' },
+    entry: { index: 'src/index.ts', browser: 'src/browser.ts' },
     format: ['esm', 'cjs'],
     dts: true,
     sourcemap: true,
