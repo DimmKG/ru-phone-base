@@ -19,7 +19,7 @@ body:
   - type: input
     id: phone
     attributes:
-      label: Номер телефона
+      label: Номер телефона (просто для примера)
       placeholder: '+7 495 123-45-67'
     validations:
       required: true
