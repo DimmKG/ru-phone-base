@@ -3,11 +3,6 @@ description: Suggest new functionality for the library or its tooling.
 title: '[Feature]: '
 labels: [enhancement]
 body:
-  - type: markdown
-    attributes:
-      value: |
-        Русскоязычная версия этого шаблона: **✨ Запрос функциональности**.
-
   - type: textarea
     id: problem
     attributes:
