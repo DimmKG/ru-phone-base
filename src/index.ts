@@ -91,13 +91,34 @@ export function createRuPhoneBase(options: RuPhoneBaseOptions = {}): RuPhoneBase
   return createRuPhoneBaseFromData(loadDataset(options));
 }
 
-const defaultInstance = createRuPhoneBase();
+let defaultInstance: RuPhoneBase | undefined;
+
+/**
+ * (Re)configures the default instance backing the module-level
+ * `lookupPhoneNumber`/`getRegions`/`getOperators`/`getOperatorByInn` exports,
+ * e.g. to load only `include: ['mobile']` or a custom `dataDir`. Call this
+ * before the first lookup if you need non-default options - reading the
+ * dataset from disk only happens once `initRuPhoneBase` or one of the
+ * module-level exports is actually used, not on import.
+ *
+ * Optional: if you never call this, the first module-level lookup lazily
+ * creates the default instance with default options (both tables, bundled
+ * dataset).
+ */
+export function initRuPhoneBase(options: RuPhoneBaseOptions = {}): RuPhoneBase {
+  defaultInstance = createRuPhoneBase(options);
+  return defaultInstance;
+}
+
+function getDefaultInstance(): RuPhoneBase {
+  return (defaultInstance ??= createRuPhoneBase());
+}
 
 /** Looks up region/operator/timezone for a Russian phone number, using the bundled default dataset. */
-export const lookupPhoneNumber = defaultInstance.lookupPhoneNumber;
+export const lookupPhoneNumber = (input: string): LookupResult => getDefaultInstance().lookupPhoneNumber(input);
 /** Every federal subject known to the bundled default dataset, each with its resolved timezone. */
-export const getRegions = defaultInstance.getRegions;
+export const getRegions = (): RegionInfo[] => getDefaultInstance().getRegions();
 /** Every operator (legal entity) in the bundled default dataset, one entry per INN. */
-export const getOperators = defaultInstance.getOperators;
+export const getOperators = (): OperatorInfo[] => getDefaultInstance().getOperators();
 /** Looks up a single operator by INN in the bundled default dataset. */
-export const getOperatorByInn = defaultInstance.getOperatorByInn;
+export const getOperatorByInn = (inn: string): OperatorInfo | undefined => getDefaultInstance().getOperatorByInn(inn);

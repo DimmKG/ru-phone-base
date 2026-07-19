@@ -132,6 +132,19 @@ custom.lookupPhoneNumber('+74951234567');
 
 Point this at the output of the `ru-phone-base-build` CLI (see below) to use a freshly regenerated dataset without reinstalling the package. The dataset's `meta.version` must match the library's `DATASET_VERSION`, and `loadDataset` verifies SHA-256 digests in `meta.files` against the on-disk JSON — a missing or mismatched version throws `DatasetVersionError`, a bad digest throws `DatasetIntegrityError`.
 
+### Reconfiguring the default instance (`initRuPhoneBase`)
+
+The module-level `lookupPhoneNumber`/`getRegions`/`getOperators`/`getOperatorByInn` exports are backed by a default instance that is created **lazily**, on first use — importing the package never touches disk. If you need it to use non-default options (a custom `dataDir` or `include`), call `initRuPhoneBase` once, before the first lookup:
+
+```ts
+import { initRuPhoneBase, lookupPhoneNumber } from 'ru-phone-base';
+
+initRuPhoneBase({ include: ['mobile'] });
+lookupPhoneNumber('+79161234567'); // uses the mobile-only instance configured above
+```
+
+If you never call `initRuPhoneBase`, the first module-level lookup creates the default instance with default options (both tables, the bundled dataset) — same behavior as calling `createRuPhoneBase()` with no arguments.
+
 ### Optional lookup tables (`fixed` / `mobile`)
 
 The compiled dataset has two lookup tables — fixed-line (`fixed.json`, ~12 MB) and mobile (`mobile.json`, ~450 KB). By default both are loaded; pass `include` to load only the tables you need.
