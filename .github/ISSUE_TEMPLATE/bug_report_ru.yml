@@ -1,0 +1,74 @@
+name: '🐛 Баг-репорт'
+description: Проблема в коде, типах или инструментах библиотеки — не про то, что номер резолвится в неверный регион/оператора (для этого есть шаблон «Ошибка в данных»).
+title: '[Bug]: '
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        English version of this template: **🐛 Bug Report**.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: Что произошло
+      description: Чёткое описание проблемы.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Ожидаемое поведение
+      description: Что должно было произойти вместо этого.
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Шаги воспроизведения / минимальный репродюсер
+      description: В идеале — небольшой фрагмент кода, воспроизводящий проблему.
+      placeholder: |
+        import { lookupPhoneNumber } from 'ru-phone-base';
+
+        console.log(lookupPhoneNumber('+7 495 123-45-67'));
+      render: ts
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Версия пакета
+      placeholder: например 1.2.1
+    validations:
+      required: true
+
+  - type: dropdown
+    id: entry-point
+    attributes:
+      label: Точка входа
+      description: Какая часть пакета используется — от этого сильно зависит, как отлаживать проблему.
+      options:
+        - Node (ESM, import из "ru-phone-base")
+        - Node (CJS, require("ru-phone-base"))
+        - Браузер ("ru-phone-base/browser")
+        - CLI (ru-phone-base-build / ru-phone-base-diff)
+        - Не уверен(а)
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Версия Node.js / браузер + бандлер
+      description: Что применимо — например «Node 20.11» или «Chrome 124 через Vite 5».
+
+  - type: checkboxes
+    id: not-data-error
+    attributes:
+      label: Проверка по теме
+      options:
+        - label: Это не ошибка в базе данных (для этого есть шаблон «Ошибка в данных»).
+          required: true

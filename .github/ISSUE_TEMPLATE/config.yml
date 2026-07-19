@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📖 Documentation
+    url: https://github.com/DimmKG/ru-phone-base#readme
+    about: Read the README before filing an issue — most usage questions are answered there.
+  - name: 📖 Документация
+    url: https://github.com/DimmKG/ru-phone-base/blob/master/README.ru.md#readme
+    about: Прочитайте README перед тем, как открыть issue — большинство вопросов уже разобраны там.

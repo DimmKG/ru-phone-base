@@ -1,0 +1,99 @@
+name: '📞 Ошибка в данных'
+description: Библиотека выдаёт неверный регион/оператора/часовой пояс для конкретного номера.
+title: '[Данные]: '
+labels: [data-error]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        База пакета собрана из официального реестра Минцифры
+        [«Российская система и план нумерации»](https://opendata.digital.gov.ru/registry/numeric)
+        ([скачать исходники](https://opendata.digital.gov.ru/registry/numeric/downloads)) —
+        это источник истины для всех данных пакета. Перед тем как открыть issue,
+        сверьтесь с записью для интересующего вас кода/диапазона в самом реестре.
+
+        Если нужно немедленно поправить данные в своей сборке, не дожидаясь
+        разбора — можно сделать это самостоятельно через `--quirks`
+        (см. раздел «Quirks» в README).
+
+  - type: input
+    id: phone
+    attributes:
+      label: Номер телефона
+      placeholder: '+7 495 123-45-67'
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Что возвращает библиотека сейчас
+      description: Вставьте результат lookupPhoneNumber() целиком (регион, оператор, часовой пояс и т.д.).
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Что должно быть правильно
+      description: Ожидаемые регион/оператор/часовой пояс.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checked-registry
+    attributes:
+      label: Проверка источника
+      options:
+        - label: >-
+            Я сверился(-лась) с записью для этого кода/диапазона в официальном реестре
+            Минцифры (https://opendata.digital.gov.ru/registry/numeric) — это источник
+            истины для данных пакета.
+          required: true
+
+  - type: dropdown
+    id: diagnosis
+    attributes:
+      label: Результат сверки с реестром Минцифры
+      options:
+        - Данные библиотеки совпадают с реестром — значит, ошибка в самом реестре
+        - Данные библиотеки НЕ совпадают с реестром — значит, ошибка в парсинге/нормализации библиотеки
+        - Не смог(ла) однозначно определить
+    validations:
+      required: true
+
+  - type: textarea
+    id: registry-error-details
+    attributes:
+      label: Если считаете, что ошибка именно в реестре Минцифры
+      description: >-
+        Что конкретно неверно (например: неверное название организации, неверный
+        регион/субъект, неверная территория и т.п.) и доказательства из независимых
+        открытых источников (сервис проверки номера самого оператора, другой
+        независимый реестр, скриншот с датой). Если проблема в парсинге библиотеки,
+        а не в реестре — напишите «не применимо».
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Версия пакета
+      placeholder: например 1.2.1
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Категория номера
+      description: Если знаете — необязательно.
+      options:
+        - 'Городские (ABC-3xx/4xx/8xx)'
+        - 'Мобильные (DEF-9xx)'
+        - Не знаю
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Дополнительный контекст

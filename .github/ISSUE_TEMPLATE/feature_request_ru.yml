@@ -1,0 +1,35 @@
+name: '✨ Запрос функциональности'
+description: Предложить новую возможность для библиотеки или её инструментов.
+title: '[Feature]: '
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        English version of this template: **✨ Feature Request**.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Проблема / мотивация
+      description: Чего не хватает сейчас или что неудобно? Чего вы пытаетесь добиться?
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Предлагаемое решение
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Рассмотренные альтернативы
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Дополнительный контекст
+      description: Ссылки, аналогичные решения, связанные issue и т.п.
