@@ -27,8 +27,8 @@ body:
   - type: textarea
     id: repro
     attributes:
-      label: Шаги воспроизведения / минимальный репродюсер
-      description: В идеале — небольшой фрагмент кода, воспроизводящий проблему.
+      label: Шаги воспроизведения / репозиторий с примером
+      description: В идеале — небольшой фрагмент кода, воспроизводящий проблему, или ссылка на репозиторий с примером.
       placeholder: |
         import { lookupPhoneNumber } from 'ru-phone-base';
 

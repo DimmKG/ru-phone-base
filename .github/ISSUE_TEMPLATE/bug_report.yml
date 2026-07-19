@@ -27,7 +27,7 @@ body:
   - type: textarea
     id: repro
     attributes:
-      label: Steps to reproduce / minimal repro
+      label: Steps to reproduce / repository with example
       description: Ideally a small code snippet that reproduces the issue.
       placeholder: |
         import { lookupPhoneNumber } from 'ru-phone-base';
