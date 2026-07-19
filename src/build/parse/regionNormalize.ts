@@ -54,38 +54,21 @@ export function resolveTokens(tokens: string[]): ResolvedTokens {
 }
 
 /**
- * A handful of federal subjects are "matryoshka"-nested inside a broader
- * subject in the registry's zone field (a historical/administrative
- * grouping), even though they're independent federal subjects in their own
- * right: Khanty-Mansi AO and Yamalo-Nenets AO both nest inside "Тюменская
- * область", Nenets AO nests inside "Архангельская область". When the zone
- * names the parent but the (more granular) place names the actual nested
- * subject, the place value is the correct, more specific answer.
- */
-const NESTING_OVERRIDES: Record<string, Set<string>> = {
-  'tyumen-oblast': new Set(['khanty-mansi-ao', 'yamalo-nenets-ao']),
-  'arkhangelsk-oblast': new Set(['nenets-ao']),
-};
-
-/**
  * Resolves the federal subject(s) for one registry row from its four
  * location-ish cells.
  *
  * The zone ("Зона обслуживания[ ГАР]") cell is the authoritative source for
  * *which subject a number block is allocated to* - this matters a lot for
- * mobile (ni-11-p) rows, where "Место установки" is the operator's often
+ * mobile rows, where "Место установки" is the operator's often
  * centralized core-network location (e.g. a hub city like Nizhny Novgorod
  * or Rostov serving many surrounding subjects) and is NOT a reliable
  * indicator of the subject the numbers belong to. So:
  *  - A zone resolving to MORE THAN ONE subject is an authoritative
  *    multi-region service area - used as-is.
- *  - A zone resolving to exactly one subject is used as-is UNLESS it's a
- *    known matryoshka parent (see NESTING_OVERRIDES above) and place names
- *    the nested child - then the more specific place value wins, silently
- *    (this is the expected/normal case, not a data anomaly).
- *  - Any other single-subject disagreement between zone and place is kept
- *    as zone's answer, but flagged via `mismatch` for visibility - it's a
- *    genuine registry inconsistency, not something to silently paper over.
+ *  - A zone resolving to exactly one subject is used as-is; any single-subject
+ *    disagreement between zone and place is kept as zone's answer, but flagged
+ *    via `mismatch` for visibility - it's a genuine registry inconsistency,
+ *    not something to silently paper over.
  *  - If zone is empty/unmapped, falls back to place.
  */
 export function resolveRowRegion(cells: {
@@ -112,9 +95,6 @@ export function resolveRowRegion(cells: {
   const placeSlug = placeResolved.slugs[0];
 
   if (placeSlug && placeSlug !== zoneSlug) {
-    if (NESTING_OVERRIDES[zoneSlug]?.has(placeSlug)) {
-      return { slugs: [placeSlug], unmapped: placeResolved.unmapped };
-    }
     return { ...zoneResolved, mismatch: { zoneToken: zoneSlug, placeToken: placeSlug } };
   }
 

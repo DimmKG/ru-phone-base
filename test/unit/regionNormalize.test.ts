@@ -49,17 +49,6 @@ describe('resolveTokens', () => {
 });
 
 describe('resolveRowRegion', () => {
-  it('prefers the more specific place value for known matryoshka nesting (Tyumen -> Khanty-Mansi AO)', () => {
-    const result = resolveRowRegion({
-      zone: 'Тюменская обл.',
-      zoneGar: 'Тюменская область',
-      place: 'г. Когалым|Ханты-Мансийский Автономный округ - Югра АО',
-      placeGar: 'г. Когалым|г.о. Когалым|Ханты-Мансийский автономный округ - Югра',
-    });
-    expect(result.slugs).toEqual(['khanty-mansi-ao']);
-    expect(result.mismatch).toBeUndefined();
-  });
-
   it('keeps the zone answer and flags a mismatch for an unexplained disagreement', () => {
     const result = resolveRowRegion({
       zone: 'Тверская область',
