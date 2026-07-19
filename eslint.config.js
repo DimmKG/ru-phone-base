@@ -6,7 +6,10 @@ import vitest from '@vitest/eslint-plugin';
 
 export default tseslint.config(
   {
-    ignores: ['dist/', 'node_modules/', 'src/data/', 'src/reports/', 'raw-data/', 'my-dataset/'],
+    // examples/ are standalone demo/smoke-test npm projects (own
+    // package.json + toolchain per example) - not part of the published
+    // package's source, so not covered by its lint/typecheck.
+    ignores: ['dist/', 'node_modules/', 'src/data/', 'src/reports/', 'raw-data/', 'examples/'],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommended,

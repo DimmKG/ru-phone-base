@@ -132,6 +132,19 @@ custom.lookupPhoneNumber('+74951234567');
 
 Укажите путь к результату работы CLI `ru-phone-base-build` (см. ниже), чтобы использовать свежепересобранную базу без переустановки пакета. Поле `meta.version` должно совпадать с `DATASET_VERSION` библиотеки, а `loadDataset` сверяет SHA-256 из `meta.files` с файлами на диске — при отсутствии или несовпадении версии выбрасывается `DatasetVersionError`, при битом хеше — `DatasetIntegrityError`.
 
+### Настройка инстанса по умолчанию (`initRuPhoneBase`)
+
+Модульные экспорты `lookupPhoneNumber`/`getRegions`/`getOperators`/`getOperatorByInn` используют инстанс по умолчанию, который создаётся **лениво**, при первом обращении — сам импорт пакета не трогает диск. Если нужны нестандартные параметры (свой `dataDir` или `include`), вызовите `initRuPhoneBase` один раз, до первого запроса:
+
+```ts
+import { initRuPhoneBase, lookupPhoneNumber } from 'ru-phone-base';
+
+initRuPhoneBase({ include: ['mobile'] });
+lookupPhoneNumber('+79161234567'); // использует настроенный выше mobile-only инстанс
+```
+
+Если `initRuPhoneBase` не вызывать, первый же модульный запрос создаст инстанс по умолчанию с параметрами по умолчанию (обе таблицы, встроенная база) — так же, как при вызове `createRuPhoneBase()` без аргументов.
+
 ### Опциональные таблицы поиска (`fixed` / `mobile`)
 
 В собранной базе две таблицы поиска — фиксированная связь (`fixed.json`, ~12 МБ) и мобильная (`mobile.json`, ~450 КБ). По умолчанию загружаются обе; параметр `include` позволяет загрузить только нужные.
@@ -158,7 +171,7 @@ mobileOnly.lookupPhoneNumber('+74951234567'); // { valid: false, reason: 'unassi
 В браузере передайте в `createRuPhoneBaseFromData` только загруженные таблицы — без `fixed`, чтобы самый большой файл не попал в бандл, и возьмите соответствующий мини-индекс операторов (`createRuPhoneBaseFromData` выбросит `DatasetOperatorsError`, если мини-индекс не подходит к таблице):
 
 ```ts
-import { createRuPhoneBaseFromData } from 'ru-phone-base';
+import { createRuPhoneBaseFromData } from 'ru-phone-base/browser';
 
 async function loadMobileOnly(baseUrl: string) {
   const [mobile, regions, operators, timezones, meta] = await Promise.all([
@@ -178,6 +191,8 @@ async function loadMobileOnly(baseUrl: string) {
 
 `createRuPhoneBase` читает базу данных с диска (только для Node.js), а сама база данных большая (`fixed.json` — несколько мегабайт даже после минификации) — **не импортируйте JSON-файлы статически в браузерное приложение**: бандлер встроит всю базу данных в ваш JS-бандл и отправит её каждому посетителю.
 
+В браузерной сборке импортируйте из **`ru-phone-base/browser`**, а не из корня пакета — тот же `createRuPhoneBaseFromData`, но без единого `node:*`-импорта, поэтому бандлеры, падающие на нерезолвящихся Node-модулях (например webpack), собираются чисто.
+
 **Рекомендуется: искать номера на сервере, отправлять в браузер только результат.** Большинству приложений вообще не нужен поиск на стороне клиента:
 
 ```ts
@@ -196,7 +211,7 @@ const result = await fetch(`/api/phone-lookup?number=${encodeURIComponent(input)
 **Если приложению действительно нужен офлайн-поиск на клиенте** (например, PWA), запрашивайте собранные JSON во время выполнения через `fetch()`, а не встраивайте их статически, и кэшируйте результат (Service Worker, IndexedDB, `Cache` API), чтобы скачивание происходило только один раз:
 
 ```ts
-import { createRuPhoneBaseFromData } from 'ru-phone-base';
+import { createRuPhoneBaseFromData } from 'ru-phone-base/browser';
 
 async function loadRuPhoneBase(baseUrl: string) {
   const names = ['fixed', 'mobile', 'regions', 'operators', 'timezones', 'meta'] as const;

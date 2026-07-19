@@ -3,3 +3,4 @@ dist/
 raw-data/
 *.log
 *.tgz
+examples/*/public/data/

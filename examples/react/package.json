@@ -1,0 +1,28 @@
+{
+  "name": "ru-phone-base-example-react",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "React demo app for ru-phone-base: phone number lookup, with a live toggle between the full and mobile-only dataset, and SHA-256 integrity verification on every load.",
+  "scripts": {
+    "data": "node ../_shared/copy-full-data.mjs public/data",
+    "predev": "npm run data",
+    "dev": "vite",
+    "prebuild": "npm run data",
+    "build": "vite build",
+    "preview": "vite preview --port 4176 --strictPort",
+    "check": "node puppet-check.mjs",
+    "test": "npm run build && start-server-and-test preview http://localhost:4176 check"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "ru-phone-base": "file:../.."
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "puppeteer-core": "^23.0.0",
+    "vite": "^5.4.0",
+    "start-server-and-test": "^2.0.9"
+  }
+}

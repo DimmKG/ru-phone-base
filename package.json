@@ -37,6 +37,16 @@
         "default": "./dist/index.cjs"
       }
     },
+    "./browser": {
+      "import": {
+        "types": "./dist/browser.d.ts",
+        "default": "./dist/browser.js"
+      },
+      "require": {
+        "types": "./dist/browser.d.cts",
+        "default": "./dist/browser.cjs"
+      }
+    },
     "./data/*.json": "./dist/data/*.json",
     "./package.json": "./package.json"
   },

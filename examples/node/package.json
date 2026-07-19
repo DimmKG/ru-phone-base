@@ -1,0 +1,12 @@
+{
+  "name": "ru-phone-base-example-node",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Smoke test: plain Node.js consumption of ru-phone-base, both ESM and CJS.",
+  "scripts": {
+    "test": "node smoke.mjs && node smoke.cjs"
+  },
+  "dependencies": {
+    "ru-phone-base": "file:../.."
+  }
+}

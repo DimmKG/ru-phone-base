@@ -1,0 +1,116 @@
+name: PR Checks
+
+on:
+  pull_request:
+
+concurrency:
+  group: pr-checks-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+  # The plain-Node target doesn't just get a shallow require/import smoke
+  # test like the bundler examples do - unlike them, it can actually run the
+  # real unit test suite (test/unit, test/integration), so it does, across
+  # every Node major version the package claims to support (engines.node in
+  # package.json). This is what would have caught it if e.g. the Web Crypto
+  # (`crypto.subtle`) usage added for browser.ts's hash verification turned
+  # out to need a newer Node than the package advertises.
+  node-versions:
+    needs: quality
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [18, 24]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Install node example dependencies
+        working-directory: examples/node
+        run: npm ci --ignore-scripts
+
+      - name: Run node example smoke test
+        working-directory: examples/node
+        run: npm test
+
+  examples:
+    needs: quality
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        example: [vite, webpack, esbuild, react]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install and build the library
+        run: |
+          npm ci --ignore-scripts
+          npm run build
+
+      - name: Setup Chrome
+        id: setup-chrome
+        uses: browser-actions/setup-chrome@v1
+
+      - name: Install example dependencies
+        working-directory: examples/${{ matrix.example }}
+        run: npm ci --ignore-scripts
+
+      - name: Run example smoke test
+        working-directory: examples/${{ matrix.example }}
+        env:
+          PUPPETEER_EXECUTABLE_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
+        run: npm test
