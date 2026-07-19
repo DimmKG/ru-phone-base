@@ -1,3 +1,11 @@
+# [1.3.0](https://github.com/DimmKG/ru-phone-base/compare/v1.2.1...v1.3.0) (2026-07-19)
+
+
+### Features
+
+* make library browser/bundlers frendly ([190142f](https://github.com/DimmKG/ru-phone-base/commit/190142faded9e69c7e248b7710b08856339411b3))
+* remove eager load of default base ([cec5538](https://github.com/DimmKG/ru-phone-base/commit/cec55388ba84315a23a9f27c55c540999e08212b))
+
 ## [1.2.1](https://github.com/DimmKG/ru-phone-base/compare/v1.2.0...v1.2.1) (2026-07-18)
 
 
