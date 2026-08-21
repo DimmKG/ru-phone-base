@@ -12,6 +12,8 @@ function parseArgs(argv: string[]) {
     osmCache: DEFAULT_OSM_CACHE_DIR,
     download: true,
     forceDownload: false,
+    insecure: false,
+    caCert: undefined as string | undefined,
     refreshTimezones: false,
     quirks: undefined as string | undefined,
   };
@@ -32,6 +34,12 @@ function parseArgs(argv: string[]) {
         break;
       case '--no-download':
         args.download = false;
+        break;
+      case '--insecure':
+        args.insecure = true;
+        break;
+      case '--ca-cert':
+        args.caCert = argv[++i];
         break;
       case '--refresh-timezones':
         args.refreshTimezones = true;
@@ -67,6 +75,11 @@ Options:
   --osm-cache <dir>       OSM Overpass response cache directory (default: ${DEFAULT_OSM_CACHE_DIR})
   --download              Force re-download of the raw CSVs even if already present in --input
   --no-download           Fail instead of downloading if a required raw CSV is missing
+  --insecure              Skip TLS certificate verification entirely when downloading. Prefer --ca-cert
+                          when possible - this disables verification outright instead of trusting one CA.
+  --ca-cert <file>        Path to an extra CA certificate (PEM) to trust when downloading, e.g. a local
+                          copy of the Russian Trusted Root CA if it's not in the system trust store.
+                          Ignored if --insecure is set.
   --refresh-timezones     Bypass the OSM Overpass on-disk cache and re-fetch timezone data
   --quirks <file>         .json/.js/.ts file exporting extra quirks (organization renames, allocation
                           field overrides, ...) - applied after the built-in ones in src/build/compile/quirks.ts.
@@ -91,6 +104,8 @@ async function main() {
   const report = await buildDataset(inputDir, outputDir, {
     download: args.download,
     forceDownload: args.forceDownload,
+    insecure: args.insecure,
+    caCertPath: args.caCert,
     osmCacheDir,
     refreshTimezones: args.refreshTimezones,
     userQuirksFile: args.quirks,

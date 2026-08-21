@@ -1,8 +1,10 @@
-import { createWriteStream, existsSync } from 'node:fs';
+import { createWriteStream, existsSync, readFileSync } from 'node:fs';
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { pipeline } from 'node:stream/promises';
 import { Readable } from 'node:stream';
+import tls from 'node:tls';
+import { Agent } from 'undici';
 
 const BASE_URL = 'https://opendata.digital.gov.ru/downloads/';
 
@@ -16,6 +18,29 @@ export interface DownloadOptions {
   force?: boolean;
   /** Per-file fetch timeout, in ms. */
   timeoutMs?: number;
+  /**
+   * Skip TLS certificate verification entirely. Prefer `caCertPath` when possible -
+   * this disables verification outright rather than just trusting one extra CA.
+   */
+  insecure?: boolean;
+  /**
+   * Path to an extra CA certificate (PEM) to trust alongside the default trust store,
+   * e.g. a local copy of the Russian Trusted Root CA that opendata.digital.gov.ru
+   * serves under on machines that don't already have it installed. Ignored if `insecure` is set.
+   */
+  caCertPath?: string;
+}
+
+// Built once per run and reused across all files, not rebuilt per request.
+function buildDispatcher(options: Pick<DownloadOptions, 'insecure' | 'caCertPath'>): Agent | undefined {
+  if (options.insecure) {
+    return new Agent({ connect: { rejectUnauthorized: false } });
+  }
+  if (options.caCertPath) {
+    const extraCa = readFileSync(options.caCertPath, 'utf8');
+    return new Agent({ connect: { ca: [...tls.rootCertificates, extraCa] } });
+  }
+  return undefined;
 }
 
 function formatBytes(bytes: number): string {
@@ -28,7 +53,13 @@ function writeStatus(prefix: string, message: string, newline = false): void {
   process.stdout.write(`\r\x1b[K${prefix}${message}${newline ? '\n' : ''}`);
 }
 
-async function downloadFile(url: string, dest: string, prefix: string, timeoutMs: number): Promise<number> {
+async function downloadFile(
+  url: string,
+  dest: string,
+  prefix: string,
+  timeoutMs: number,
+  dispatcher: Agent | undefined,
+): Promise<number> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   let response: Response;
@@ -36,6 +67,10 @@ async function downloadFile(url: string, dest: string, prefix: string, timeoutMs
     response = await fetch(url, {
       headers: { 'User-Agent': USER_AGENT },
       signal: controller.signal,
+      // undici's Dispatcher type doesn't structurally match Node's built-in
+      // RequestInit['dispatcher'] (separate copies of undici-types), even
+      // though the runtime accepts it fine.
+      ...(dispatcher ? { dispatcher: dispatcher as unknown as NonNullable<RequestInit['dispatcher']> } : {}),
     });
   } finally {
     clearTimeout(timer);
@@ -91,6 +126,7 @@ async function downloadFile(url: string, dest: string, prefix: string, timeoutMs
  */
 export async function downloadRawData(destDir: string, options: DownloadOptions = {}): Promise<string[]> {
   const { force = false, timeoutMs = 60_000 } = options;
+  const dispatcher = buildDispatcher(options);
   await mkdir(destDir, { recursive: true });
 
   console.log(`Downloading raw registry CSVs to ${destDir}:`);
@@ -108,7 +144,7 @@ export async function downloadRawData(destDir: string, options: DownloadOptions 
     }
 
     writeStatus(prefix, 'starting...');
-    await downloadFile(BASE_URL + file, dest, prefix, timeoutMs);
+    await downloadFile(BASE_URL + file, dest, prefix, timeoutMs, dispatcher);
     downloaded.push(file);
   }
 

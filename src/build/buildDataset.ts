@@ -25,6 +25,10 @@ export interface BuildOptions {
   download?: boolean;
   /** Force re-download even if files already exist locally. */
   forceDownload?: boolean;
+  /** Skip TLS certificate verification entirely when downloading. Prefer `caCertPath` when possible. */
+  insecure?: boolean;
+  /** Path to an extra CA certificate (PEM) to trust when downloading, e.g. a local Russian Trusted Root CA. Ignored if `insecure` is set. */
+  caCertPath?: string;
   /** OSM Overpass response cache directory. Defaults to a `ru-phone-base-osm-cache` folder under the OS temp directory. */
   osmCacheDir?: string;
   /** Re-fetch OSM timezone data instead of using the on-disk cache. */
@@ -57,16 +61,24 @@ export async function buildDataset(
   outputDir: string,
   options: BuildOptions = {},
 ): Promise<BuildReport> {
-  const { download = true, forceDownload = false, osmCacheDir, refreshTimezones = false, userQuirksFile } = options;
+  const {
+    download = true,
+    forceDownload = false,
+    insecure = false,
+    caCertPath,
+    osmCacheDir,
+    refreshTimezones = false,
+    userQuirksFile,
+  } = options;
 
   // User-supplied quirks (see loadQuirks.ts) are appended after the built-in
   // ones, so they're applied last and can override/extend them.
   const allQuirks = userQuirksFile ? [...QUIRKS, ...(await loadUserQuirks(userQuirksFile))] : QUIRKS;
 
   if (forceDownload) {
-    await downloadRawData(inputDir, { force: true });
+    await downloadRawData(inputDir, { force: true, insecure, caCertPath });
   } else if (download) {
-    await downloadRawData(inputDir);
+    await downloadRawData(inputDir, { insecure, caCertPath });
   }
 
   logStage(1, `Parsing raw registry CSVs from ${inputDir}...`);
