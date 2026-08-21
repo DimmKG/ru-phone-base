@@ -82,15 +82,6 @@
   },
   {
     "kind": "duplicate-inn",
-    "inn": "1681000024",
-    "canonicalName": "ПАО \"Таттелеком\"",
-    "otherNames": [
-      "ПАО \"ТАТТЕЛЕКОМ\""
-    ],
-    "caseOnly": true
-  },
-  {
-    "kind": "duplicate-inn",
     "inn": "1831083343",
     "canonicalName": "АО \"ИЭМЗ \"Купол\"",
     "otherNames": [
@@ -178,15 +169,6 @@
       "ЗАО \"ЦЕНТРСВЯЗЬ\""
     ],
     "caseOnly": true
-  },
-  {
-    "kind": "duplicate-inn",
-    "inn": "5031023960",
-    "canonicalName": "АО \"Компания местной связи\"",
-    "otherNames": [
-      "АО \"КОМЕС\""
-    ],
-    "caseOnly": false
   },
   {
     "kind": "duplicate-inn",
@@ -453,15 +435,6 @@
   },
   {
     "kind": "duplicate-inn",
-    "inn": "7734236387",
-    "canonicalName": "ООО \"Телеком сервис Т\"",
-    "otherNames": [
-      "ООО \"ТЕЛЕКОМ СЕРВИС Т\""
-    ],
-    "caseOnly": true
-  },
-  {
-    "kind": "duplicate-inn",
     "inn": "7735143350",
     "canonicalName": "ООО \"ДАТАПЛЭНЕТ\"",
     "otherNames": [
@@ -664,15 +637,6 @@
     "canonicalName": "ООО \"МКС\"",
     "otherNames": [
       "ООО \"МОБИЛЬНЫЕ КОММУНИКАЦИОННЫЕ СИСТЕМЫ\""
-    ],
-    "caseOnly": false
-  },
-  {
-    "kind": "duplicate-inn",
-    "inn": "9705251105",
-    "canonicalName": "АО \"ХЭДВИГ\"",
-    "otherNames": [
-      "АКЦИОНЕРНОЕ ОБЩЕСТВО \"ХЭДВИГ\""
     ],
     "caseOnly": false
   },
