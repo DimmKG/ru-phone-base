@@ -1,3 +1,11 @@
+## [1.3.1](https://github.com/DimmKG/ru-phone-base/compare/v1.3.0...v1.3.1) (2026-08-21)
+
+
+### Bug Fixes
+
+* **cli:** add ca-cert args to use russian trusted root ca ([8062e09](https://github.com/DimmKG/ru-phone-base/commit/8062e09c37c601c167c8794d5d3355e5de0ff88c))
+* **data:** update database 2026-08-21 ([64b83d3](https://github.com/DimmKG/ru-phone-base/commit/64b83d3964590f0a3bb934b239e45baea3fa11a0))
+
 # [1.3.0](https://github.com/DimmKG/ru-phone-base/compare/v1.2.1...v1.3.0) (2026-07-19)
 
 
