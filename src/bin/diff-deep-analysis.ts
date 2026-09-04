@@ -1,13 +1,13 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { loadSnapshot } from '../src/build/diff/loadSnapshot.js';
-import { diffAllocations } from '../src/build/diff/diffAllocations.js';
+import { loadSnapshot } from '../build/diff/loadSnapshot.js';
+import { diffAllocations } from '../build/diff/diffAllocations.js';
 import {
   summarizeChangeCategories,
   computeOperatorCapacityMovers,
   diffDiscrepancyEntries,
   renderDeepAnalysisText,
-} from './deepDiffAnalysis.js';
+} from '../build/diff/deepAnalysis.js';
 
 function parseArgs(argv: string[]) {
   const args = {
@@ -50,12 +50,12 @@ function parseArgs(argv: string[]) {
 }
 
 function printHelp() {
-  console.log(`diff-deep-analysis - a deeper look at a ru-phone-base dataset diff than "npm run diff:data" gives:
-splits changed allocations into real reassignments vs. registry housekeeping (name re-casing, settlement
+  console.log(`ru-phone-base-diff-analyze - a deeper look at a ru-phone-base dataset diff than ru-phone-base-diff
+gives: splits changed allocations into real reassignments vs. registry housekeeping (name re-casing, settlement
 rewording), and ranks operators by net capacity change computed directly from the two full allocation lists
-(immune to diffAllocations' known block-merge-boundary artifact - see src/build/diff/diffAllocations.ts).
+(immune to diffAllocations' known block-merge-boundary artifact).
 
-Usage: tsx tools/diff-deep-analysis.ts --old <dir> --new-data <dir> [options]
+Usage: ru-phone-base-diff-analyze --old <dir> --new-data <dir> [options]
 
 Options:
   --old <dir>          (required) Directory containing a previous snapshot,

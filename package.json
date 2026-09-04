@@ -52,7 +52,8 @@
   },
   "bin": {
     "ru-phone-base-build": "dist/bin/build-data.js",
-    "ru-phone-base-diff": "dist/bin/diff-dataset.js"
+    "ru-phone-base-diff": "dist/bin/diff-dataset.js",
+    "ru-phone-base-diff-analyze": "dist/bin/diff-deep-analysis.js"
   },
   "files": [
     "dist"
@@ -62,7 +63,7 @@
     "build": "tsup",
     "build:data": "tsx src/bin/build-data.ts --input raw-data --output src/data",
     "diff:data": "tsx src/bin/diff-dataset.ts",
-    "diff:analyze": "tsx tools/diff-deep-analysis.ts",
+    "diff:analyze": "tsx src/bin/diff-deep-analysis.ts",
     "dev": "tsup --watch",
     "test": "vitest run",
     "test:watch": "vitest",

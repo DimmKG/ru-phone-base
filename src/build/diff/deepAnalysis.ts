@@ -1,5 +1,5 @@
-import type { AllocationChange, AllocationDiffResult } from '../src/build/diff/diffAllocations.js';
-import type { DecodedAllocation } from '../src/build/diff/decodeTable.js';
+import type { AllocationChange, AllocationDiffResult } from './diffAllocations.js';
+import type { DecodedAllocation } from './decodeTable.js';
 
 /**
  * `diffAllocations`'s `added`/`removed`/`changed` lists are keyed on the exact

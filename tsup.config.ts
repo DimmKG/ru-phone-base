@@ -20,7 +20,11 @@ export default defineConfig([
     },
   },
   {
-    entry: { 'bin/build-data': 'src/bin/build-data.ts', 'bin/diff-dataset': 'src/bin/diff-dataset.ts' },
+    entry: {
+      'bin/build-data': 'src/bin/build-data.ts',
+      'bin/diff-dataset': 'src/bin/diff-dataset.ts',
+      'bin/diff-deep-analysis': 'src/bin/diff-deep-analysis.ts',
+    },
     format: ['esm'],
     dts: false,
     sourcemap: false,

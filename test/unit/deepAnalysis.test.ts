@@ -4,7 +4,7 @@ import {
   summarizeChangeCategories,
   computeOperatorCapacityMovers,
   diffDiscrepancyEntries,
-} from '../../tools/deepDiffAnalysis.js';
+} from '../../src/build/diff/deepAnalysis.js';
 import type { AllocationChange, AllocationPayload } from '../../src/build/diff/diffAllocations.js';
 import type { DecodedAllocation } from '../../src/build/diff/decodeTable.js';
 
