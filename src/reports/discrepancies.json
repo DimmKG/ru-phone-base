@@ -290,15 +290,6 @@
   },
   {
     "kind": "duplicate-inn",
-    "inn": "7702764401",
-    "canonicalName": "ООО \"Фастком\"",
-    "otherNames": [
-      "ООО \"ФАСТКОМ\""
-    ],
-    "caseOnly": true
-  },
-  {
-    "kind": "duplicate-inn",
     "inn": "7704313813",
     "canonicalName": "ООО \"Объединенная телекоммуникационная корпорация\"",
     "otherNames": [
@@ -417,15 +408,6 @@
   },
   {
     "kind": "duplicate-inn",
-    "inn": "7725153180",
-    "canonicalName": "ООО \"Универсум бит\"",
-    "otherNames": [
-      "ООО \"УНИВЕРСУМ БИТ\""
-    ],
-    "caseOnly": true
-  },
-  {
-    "kind": "duplicate-inn",
     "inn": "7727752084",
     "canonicalName": "ООО \"МСН Телеком\"",
     "otherNames": [
@@ -520,15 +502,6 @@
     "canonicalName": "ПАО \"МегаФон\"",
     "otherNames": [
       "ПАО \"МЕГАФОН\""
-    ],
-    "caseOnly": true
-  },
-  {
-    "kind": "duplicate-inn",
-    "inn": "7813220816",
-    "canonicalName": "ООО \"Деловая связь\"",
-    "otherNames": [
-      "ООО \"ДЕЛОВАЯ СВЯЗЬ\""
     ],
     "caseOnly": true
   },
