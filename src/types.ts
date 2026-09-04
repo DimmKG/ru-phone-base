@@ -66,7 +66,7 @@ export interface DatasetMeta {
    * SHA-256 digests of the compiled data files (everything except `meta.json`
    * itself). Verified by `loadDataset` against on-disk bytes.
    */
-  files: { file: string; sha256: string }[];
+  files: { file: DatasetDataFile; sha256: string }[];
   builtAt?: string;
   sourceFiles?: { file: string; sha256: string }[];
   rowCounts?: Record<string, number>;

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { listOperators, findOperatorByInn } from '../../src/lookup.js';
+import { listOperators, findOperatorByInn, getDatasetInfo } from '../../src/lookup.js';
 import type { Dataset } from '../../src/types.js';
 
 function dataset(operators: Record<string, string>): Dataset {
@@ -31,5 +31,13 @@ describe('listOperators / findOperatorByInn', () => {
     const ds = dataset({ '7707083893': 'ПАО "МТС"' });
     expect(findOperatorByInn(ds, '7707083893')).toEqual({ name: 'ПАО "МТС"', inn: '7707083893' });
     expect(findOperatorByInn(ds, '0000000000')).toBeUndefined();
+  });
+});
+
+describe('getDatasetInfo', () => {
+  it('returns the dataset meta as-is', () => {
+    const ds = dataset({});
+    ds.meta = { version: 1, files: [], builtAt: '2026-08-21T17:19:53.798Z', rowCounts: { 'DEF-9xx': 17059 } };
+    expect(getDatasetInfo(ds)).toBe(ds.meta);
   });
 });

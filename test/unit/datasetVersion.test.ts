@@ -11,7 +11,7 @@ import {
 } from '../../src/index.js';
 import { assertDatasetFileHashes, loadDataset, sha256Hex } from '../../src/dataLoader.js';
 import { assertDatasetFileHashesAsync, sha256HexAsync } from '../../src/browser.js';
-import type { Dataset } from '../../src/types.js';
+import type { Dataset, DatasetDataFile } from '../../src/types.js';
 
 function minimalDataset(meta: Dataset['meta']): Dataset {
   return {
@@ -69,8 +69,11 @@ describe('dataset file hashes', () => {
   });
 
   it('throws when a loaded file hash is missing from the manifest', () => {
+    // 'other.json' stands in for a manifest that simply doesn't cover the file
+    // being verified - real JSON off disk isn't statically typed, so this is
+    // reachable at runtime even though the type only allows known file names.
     expect(() =>
-      assertDatasetFileHashes({ version: 1, files: [{ file: 'other.json', sha256: 'abc' }] }, [
+      assertDatasetFileHashes({ version: 1, files: [{ file: 'other.json' as DatasetDataFile, sha256: 'abc' }] }, [
         { file: 'regions.json', content: '{}' },
       ]),
     ).toThrow(/no sha256 for regions\.json/);
@@ -127,7 +130,7 @@ describe.skipIf(!hasWebCrypto)('dataset file hashes (browser entry, Web Crypto)'
   it('accepts the bundled dataset file digests fetched as raw bytes', async () => {
     const dataset = loadDataset();
     const bundled = path.join(process.cwd(), 'src/data');
-    const files = ['mobile.json', 'regions.json', 'operators-mobile.json', 'timezones.json'].map((file) => ({
+    const files = (['mobile.json', 'regions.json', 'operators-mobile.json', 'timezones.json'] as const).map((file) => ({
       file,
       content: readFileSync(path.join(bundled, file)), // Buffer is an ArrayBufferView (Uint8Array)
     }));
@@ -142,7 +145,7 @@ describe.skipIf(!hasWebCrypto)('dataset file hashes (browser entry, Web Crypto)'
 
   it('throws when a loaded file hash is missing from the manifest', async () => {
     await expect(
-      assertDatasetFileHashesAsync({ version: 1, files: [{ file: 'other.json', sha256: 'abc' }] }, [
+      assertDatasetFileHashesAsync({ version: 1, files: [{ file: 'other.json' as DatasetDataFile, sha256: 'abc' }] }, [
         { file: 'regions.json', content: '{}' },
       ]),
     ).rejects.toThrow(/no sha256 for regions\.json/);

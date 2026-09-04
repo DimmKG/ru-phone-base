@@ -14,6 +14,7 @@ import {
   assertDatasetVersion,
   DatasetIntegrityError,
   type Dataset,
+  type DatasetDataFile,
   type DatasetMeta,
   type OperatorsIndex,
   type TableName,
@@ -53,7 +54,10 @@ export function sha256Hex(content: Buffer | string): string {
  * Verifies SHA-256 digests of the given on-disk dataset files against `meta.files`.
  * Throws `DatasetIntegrityError` when the manifest is missing, a hash is absent, or a digest mismatches.
  */
-export function assertDatasetFileHashes(meta: DatasetMeta, files: { file: string; content: Buffer | string }[]): void {
+export function assertDatasetFileHashes(
+  meta: DatasetMeta,
+  files: { file: DatasetDataFile; content: Buffer | string }[],
+): void {
   if (!Array.isArray(meta.files) || meta.files.length === 0) {
     throw new DatasetIntegrityError('missing-manifest');
   }
@@ -71,7 +75,9 @@ export function assertDatasetFileHashes(meta: DatasetMeta, files: { file: string
 }
 
 /** Picks which operators index file to load for the requested tables. */
-export function operatorsFileForInclude(include: TableName[]): string {
+export function operatorsFileForInclude(
+  include: TableName[],
+): 'operators.json' | 'operators-fixed.json' | 'operators-mobile.json' {
   const wantFixed = include.includes('fixed');
   const wantMobile = include.includes('mobile');
   if (wantFixed && wantMobile) return 'operators.json';

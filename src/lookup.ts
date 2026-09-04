@@ -2,6 +2,7 @@ import type {
   Block,
   CompiledCodeTable,
   Dataset,
+  DatasetMeta,
   FederalSubject,
   LookupResult,
   NumberType,
@@ -111,6 +112,11 @@ export function listOperators(dataset: Dataset): OperatorInfo[] {
 export function findOperatorByInn(dataset: Dataset, inn: string): OperatorInfo | undefined {
   const name = dataset.operators[inn];
   return name !== undefined ? { name, inn } : undefined;
+}
+
+/** Returns the dataset's `meta.json` contents as-is - build timestamp, file hashes, source row counts, timezone-resolution stats. */
+export function getDatasetInfo(dataset: Dataset): DatasetMeta {
+  return dataset.meta;
 }
 
 export interface DecodedBlockAllocation {

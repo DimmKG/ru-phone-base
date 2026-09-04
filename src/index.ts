@@ -1,6 +1,6 @@
 import { loadDataset } from './dataLoader.js';
 import { createRuPhoneBaseFromData, type RuPhoneBase } from './browser.js';
-import type { LookupResult, OperatorInfo, RegionInfo, TableName } from './types.js';
+import type { DatasetMeta, LookupResult, OperatorInfo, RegionInfo, TableName } from './types.js';
 
 export * from './browser.js';
 export type { LoadDatasetOptions } from './dataLoader.js';
@@ -26,7 +26,7 @@ let defaultInstance: RuPhoneBase | undefined;
 
 /**
  * (Re)configures the default instance backing the module-level
- * `lookupPhoneNumber`/`getRegions`/`getOperators`/`getOperatorByInn` exports,
+ * `lookupPhoneNumber`/`getRegions`/`getOperators`/`getOperatorByInn`/`getDatasetInfo` exports,
  * e.g. to load only `include: ['mobile']` or a custom `dataDir`. Call this
  * before the first lookup if you need non-default options - reading the
  * dataset from disk only happens once `initRuPhoneBase` or one of the
@@ -53,3 +53,5 @@ export const getRegions = (): RegionInfo[] => getDefaultInstance().getRegions();
 export const getOperators = (): OperatorInfo[] => getDefaultInstance().getOperators();
 /** Looks up a single operator by INN in the bundled default dataset. */
 export const getOperatorByInn = (inn: string): OperatorInfo | undefined => getDefaultInstance().getOperatorByInn(inn);
+/** Info about the bundled default dataset itself - build timestamp, file hashes, source row counts, timezone-resolution stats. */
+export const getDatasetInfo = (): DatasetMeta => getDefaultInstance().getDatasetInfo();

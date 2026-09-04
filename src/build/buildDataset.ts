@@ -18,7 +18,7 @@ import { QUIRKS, applyOrganizationNameQuirks, applyAllocationFieldQuirks } from 
 import { loadUserQuirks } from './compile/loadQuirks.js';
 import { fetchSubjectTimezones } from './osm/fetchSubjectTimezones.js';
 import type { NormalizedRow, SourceFile } from './parse/types.js';
-import { DATASET_VERSION } from '../types.js';
+import { DATASET_DATA_FILES, DATASET_VERSION } from '../types.js';
 
 export interface BuildOptions {
   /** Download missing raw CSVs from opendata.digital.gov.ru before parsing. Default: true. */
@@ -179,19 +179,10 @@ export async function buildDataset(
   writeJson(path.join(outputDir, 'operators-fixed.json'), operatorsFixed);
   writeJson(path.join(outputDir, 'operators-mobile.json'), operatorsMobile);
   writeJson(path.join(outputDir, 'timezones.json'), timezoneResult.timezones);
-  const dataFiles = [
-    'fixed.json',
-    'mobile.json',
-    'regions.json',
-    'operators.json',
-    'operators-fixed.json',
-    'operators-mobile.json',
-    'timezones.json',
-  ] as const;
   writeJson(path.join(outputDir, 'meta.json'), {
     version: DATASET_VERSION,
     builtAt: new Date().toISOString(),
-    files: dataFiles.map((file) => fileMeta(path.join(outputDir, file), file)),
+    files: DATASET_DATA_FILES.map((file) => fileMeta(path.join(outputDir, file), file)),
     sourceFiles: RAW_DATA_FILES.map((file) => fileMeta(path.join(inputDir, file), file)),
     rowCounts: {
       ...Object.fromEntries(FIXED_FILES.map(({ sourceFile }, i) => [sourceFile, fixedParsed[i].rows.length])),
@@ -286,7 +277,7 @@ function writeFormattedJson(filePath: string, data: unknown): void {
   writeFileSync(filePath, JSON.stringify(data, null, 2) + '\n');
 }
 
-function fileMeta(filePath: string, name: string): { file: string; sha256: string } {
+function fileMeta<T extends string>(filePath: string, name: T): { file: T; sha256: string } {
   const content = readFileSync(filePath);
   return { file: name, sha256: createHash('sha256').update(content).digest('hex') };
 }

@@ -121,6 +121,17 @@ getOperatorByInn('7740000076');
 // { name: 'ПАО "Мобильные ТелеСистемы"', inn: '7740000076' }
 ```
 
+### `getDatasetInfo(): DatasetMeta`
+
+Info about the loaded dataset itself, straight from its `meta.json` — build timestamp, per-file SHA-256 hashes, source row counts, timezone-resolution stats.
+
+```ts
+import { getDatasetInfo } from 'ru-phone-base';
+
+getDatasetInfo();
+// { version: 1, builtAt: '2026-08-21T17:19:53.798Z', files: [...], rowCounts: { 'DEF-9xx': 17059, ... }, ... }
+```
+
 ### Custom dataset location
 
 ```ts
@@ -134,7 +145,7 @@ Point this at the output of the `ru-phone-base-build` CLI (see below) to use a f
 
 ### Reconfiguring the default instance (`initRuPhoneBase`)
 
-The module-level `lookupPhoneNumber`/`getRegions`/`getOperators`/`getOperatorByInn` exports are backed by a default instance that is created **lazily**, on first use — importing the package never touches disk. If you need it to use non-default options (a custom `dataDir` or `include`), call `initRuPhoneBase` once, before the first lookup:
+The module-level `lookupPhoneNumber`/`getRegions`/`getOperators`/`getOperatorByInn`/`getDatasetInfo` exports are backed by a default instance that is created **lazily**, on first use — importing the package never touches disk. If you need it to use non-default options (a custom `dataDir` or `include`), call `initRuPhoneBase` once, before the first lookup:
 
 ```ts
 import { initRuPhoneBase, lookupPhoneNumber } from 'ru-phone-base';

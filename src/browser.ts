@@ -1,10 +1,17 @@
-import { lookupPhoneNumber as lookupInDataset, listRegions, listOperators, findOperatorByInn } from './lookup.js';
+import {
+  lookupPhoneNumber as lookupInDataset,
+  listRegions,
+  listOperators,
+  findOperatorByInn,
+  getDatasetInfo,
+} from './lookup.js';
 import { normalizePhoneNumber } from './phone.js';
 import {
   assertDatasetVersion,
   assertOperatorsCoverTables,
   DatasetIntegrityError,
   type Dataset,
+  type DatasetDataFile,
   type DatasetMeta,
   type LookupResult,
   type OperatorInfo,
@@ -13,6 +20,7 @@ import {
 
 export type {
   Dataset,
+  DatasetDataFile,
   DatasetMeta,
   LookupResult,
   LookupSuccess,
@@ -58,6 +66,8 @@ export interface RuPhoneBase {
   getOperators(): OperatorInfo[];
   /** Looks up a single operator by INN. Returns undefined when the INN is not in the dataset. */
   getOperatorByInn(inn: string): OperatorInfo | undefined;
+  /** Info about the loaded dataset itself - build timestamp, file hashes, source row counts, timezone-resolution stats. */
+  getDatasetInfo(): DatasetMeta;
 }
 
 /**
@@ -79,6 +89,7 @@ export function createRuPhoneBaseFromData(dataset: Dataset): RuPhoneBase {
     getRegions: () => listRegions(dataset),
     getOperators: () => listOperators(dataset),
     getOperatorByInn: (inn: string) => findOperatorByInn(dataset, inn),
+    getDatasetInfo: () => getDatasetInfo(dataset),
   };
 }
 
@@ -116,7 +127,7 @@ export async function sha256HexAsync(content: string | ArrayBuffer | ArrayBuffer
  */
 export async function assertDatasetFileHashesAsync(
   meta: DatasetMeta,
-  files: { file: string; content: string | ArrayBuffer | ArrayBufferView }[],
+  files: { file: DatasetDataFile; content: string | ArrayBuffer | ArrayBufferView }[],
 ): Promise<void> {
   if (!Array.isArray(meta.files) || meta.files.length === 0) {
     throw new DatasetIntegrityError('missing-manifest');
