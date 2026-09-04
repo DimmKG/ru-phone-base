@@ -1,3 +1,16 @@
+# [1.4.0](https://github.com/DimmKG/ru-phone-base/compare/v1.3.1...v1.4.0) (2026-09-04)
+
+
+### Bug Fixes
+
+* **data:** update database 2026-09-04 ([9ec774a](https://github.com/DimmKG/ru-phone-base/commit/9ec774a023856ba5950bd3a8ef265dc78a45d6a3))
+
+
+### Features
+
+* add deep analysis tool ([f9201c3](https://github.com/DimmKG/ru-phone-base/commit/f9201c3a306a195a656f2295ab8be95007d1aa3f))
+* add getDatasetInfo method ([4a89cf8](https://github.com/DimmKG/ru-phone-base/commit/4a89cf8fa42480280f33870c118f376a35d58dbb))
+
 ## [1.3.1](https://github.com/DimmKG/ru-phone-base/compare/v1.3.0...v1.3.1) (2026-08-21)
 
 
