@@ -29,10 +29,11 @@ IP.
    cp -r src/reports /tmp/old-snapshot/reports
    ```
 
-2. **Пересобрать датасет**:
+2. **Скачать базу из сайта Минцифры и пересобрать датасет**:
+   Для скачивания требуется сертификат Минцифры Russian Trusted Root CA. Если файла нет проверку можно игнорировать через аргумент --insecure
 
    ```bash
-   npm run build:data -- --download
+   npm run build:data -- --download --ca-cert russian_trusted_root_ca.cer
    ```
 
 3. **Проверить, реально ли что-то изменилось** — сравнить хэши исходных CSV в `meta.json`
