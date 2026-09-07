@@ -1,3 +1,10 @@
+## [1.4.1](https://github.com/DimmKG/ru-phone-base/compare/v1.4.0...v1.4.1) (2026-09-07)
+
+
+### Bug Fixes
+
+* rollback undici version to make script work on node 18 ([f39db6b](https://github.com/DimmKG/ru-phone-base/commit/f39db6b6ed4d8bdabcbc01f2f00307c7c1161623))
+
 # [1.4.0](https://github.com/DimmKG/ru-phone-base/compare/v1.3.1...v1.4.0) (2026-09-04)
 
 
